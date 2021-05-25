@@ -1,0 +1,4 @@
+[submodule "EventToInternet"]
+	path = EventToInternet
+	url = https://github.com/NETMVAS/feecc-hid-reader-daemon.git
+	branch = spoke-edition
