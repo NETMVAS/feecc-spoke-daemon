@@ -1,19 +1,18 @@
 from Display import Display
 import atexit
-from time import sleep
 import threading
 import logging
 import funcs
 import requests
 import typing as tp
-from flask import Flask, request, Response
+from flask import Flask, request
 from flask_restful import Api, Resource
 from Worker import Worker
 
 # set up logging
 logging.basicConfig(
     level=logging.DEBUG,
-    filename="spoke-daemon.log",
+    # filename="spoke-daemon.log",
     format="%(asctime)s %(levelname)s: %(message)s"
 )
 
@@ -38,7 +37,7 @@ class HidEventHandler(Resource):
 
     def post(self) -> None:
         # parse the event dict JSON
-        event_dict = request.get_data()
+        event_dict: dict = request.get_json()
         logging.debug(f"Received event dict:\n{event_dict}")
 
         # identify, from which device the input is coming from
@@ -54,22 +53,43 @@ class HidEventHandler(Resource):
             logging.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
             return
 
+        global worker, display
+
         # handle the event in accord with it's source
         if sender == "rfid_reader":
             # if worker is logged in - log him out
-            global worker, display
             if worker.is_authorized:
                 worker.log_out()
                 display.state = 0
                 return
 
-            # todo
             # make a call to authorize the worker otherwise
-            pass
+            response = requests.post(
+                url=f'{config["endpoints"]["hub_socket"]}/api/validator',
+                json={"rfid_string": event_dict["string"]}
+            )
+
+            response = response.json()
+
+            # check if worker authorized and log him in
+            if response["is_valid"]:
+                worker.full_name = response["employee_name"]
+                worker.position = response["position"]
+                worker.log_in()
+            else:
+                logging.error("Worker could not be authorized: hub rejected ID card")
+
+            display.state = 1
 
         # todo
         elif sender == "barcode_reader":
-            pass
+            # ignore the event if unauthorized
+            if not worker.is_authorized:
+                logging.info(f"Ignoring barcode event: worker not authorized.")
+                return
+
+            # make a request to the hub regarding the ID
+            barcode_string = event_dict["string"]
 
 
 class ResetState(Resource):
