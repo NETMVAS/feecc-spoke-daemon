@@ -60,7 +60,10 @@ class Display:
         login_screen_draw.text((35 + 50 + 10, block_start), message, font=self.font_s, fill=0)
 
         # draw the footer
-        footer = f"spoke no.{self.spoke_config['general']['spoke_num']}. IPv4: {self.ipv4}"
+        footer = f"spoke no.{self.spoke_config['general']['spoke_num']}"
+        if self.ipv4:
+            footer += f". IPv4: {self.ipv4}"
+
         w, h = login_screen_draw.textsize(footer, self.font_s)
         login_screen_draw.text((self.epd.width - w / 2, block_start + 50 + 3), footer, font=self.font_s, fill=0)
 
