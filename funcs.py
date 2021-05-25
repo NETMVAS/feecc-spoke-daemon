@@ -45,18 +45,3 @@ def read_configuration(config_path: str = "config.yaml") -> tp.Dict[str, tp.Dict
     except Exception as e:
         logging.critical(f"Error while reading configuration file: \n{e}")
         sys.exit()
-
-
-def short_name(full_name: str) -> str:
-    """
-    shortens name like so:
-    Ivanov Ivan Ivanovich -> Ivanov I. I.
-    """
-
-    name = full_name.split(" ")
-    short_name = [name[0]]
-    for part in name[1:]:
-        part = part[0] + "."
-        short_name.append(part)
-
-    return " ".join(short_name)

@@ -1,2 +1,13 @@
-general:
+general: # miscellaneous parameters
   spoke_num: 1 # device number
+
+endpoints:
+  hub_ip: "192.168.1.2:5000" # hub api socket on the LAN
+
+api: # settings regarding rest api server
+  server_ip: "0.0.0.0" # an ip a server will run on
+  server_port: 5000 # port for the server to run on
+
+known_hid_devices: # known attached devices with their full names
+  rfid_reader: "sample"
+  barcode_reader: "sample"

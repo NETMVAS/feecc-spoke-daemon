@@ -4,14 +4,16 @@ from PIL import Image, ImageDraw, ImageFont
 from waveshare_epd import epd2in13d
 from math import floor
 from time import sleep
-from funcs import get_own_ip, short_name
+from funcs import get_own_ip
+from Worker import Worker
 
 # Set output log level
 logging.basicConfig(level=logging.DEBUG)
 
 
 class Display:
-    def __init__(self, config) -> None:
+    def __init__(self, config: dict, associated_worker: Worker) -> None:
+        self.associated_worker: Worker = associated_worker
         self.spoke_config = config
         self.state = 0  # state no as described in architecture docs
         self.latest_known_state = -1
@@ -70,7 +72,7 @@ class Display:
         # display the image
         self.epd.display(self.epd.getbuffer(login_screen))
 
-    def authorization(self, is_authorized: bool = False, **kwargs):
+    def authorization(self):
         """displays authorization screen"""
 
         logging.info("Display authorization screen")
@@ -79,7 +81,7 @@ class Display:
         auth_screen = Image.new("1", (self.epd.height, self.epd.width), 255)
         auth_screen_draw = ImageDraw.Draw(auth_screen)
         
-        if not is_authorized:
+        if not self.associated_worker.is_authorized:
             # display a message about failed authorization
 
             # draw the cross sign
@@ -112,7 +114,7 @@ class Display:
             auth_screen.paste(tick_image, (20, floor((self.epd.width - img_h) / 2)))
 
             try:
-                message = f"Авторизован\n{kwargs['worker_position']}\n{short_name(kwargs['worker_name'])}"
+                message = f"Авторизован\n{self.associated_worker.position}\n{self.associated_worker.short_name()}"
 
                 # draw the message
                 txt_h, txt_w = auth_screen_draw.textsize(message, self.font_s)
@@ -178,11 +180,7 @@ class Display:
                     continue
 
                 elif self.state == 1:  # authorization status and awaiting barcode event
-                    self.authorization(
-                        is_authorized=True,
-                        # worker_name="Петров Петр Петрович",
-                        worker_position="Младший Инженер"
-                    )
+                    self.authorization()
                     continue
 
                 elif self.state == 2:  # ongoing operation
