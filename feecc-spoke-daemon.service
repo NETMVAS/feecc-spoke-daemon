@@ -1,0 +1,13 @@
+[Unit]
+Description=Feecc QA system daemon for the Spoke device
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/feecc-spoke-daemon
+ExecStart=python3 /home/pi/feecc-spoke-daemon/main.py
+User=pi
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
