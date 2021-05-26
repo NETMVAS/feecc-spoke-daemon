@@ -64,20 +64,24 @@ class HidEventHandler(Resource):
                 return
 
             # make a call to authorize the worker otherwise
-            response = requests.post(
-                url=f'{config["endpoints"]["hub_socket"]}/api/validator',
-                json={"rfid_string": event_dict["string"]}
-            )
+            try:
+                response = requests.post(
+                    url=f'{config["endpoints"]["hub_socket"]}/api/validator',
+                    json={"rfid_string": event_dict["string"]}
+                )
 
-            response = response.json()
+                response = response.json()
 
-            # check if worker authorized and log him in
-            if response["is_valid"]:
-                worker.full_name = response["employee_name"]
-                worker.position = response["position"]
-                worker.log_in()
-            else:
-                logging.error("Worker could not be authorized: hub rejected ID card")
+                # check if worker authorized and log him in
+                if response["is_valid"]:
+                    worker.full_name = response["employee_name"]
+                    worker.position = response["position"]
+                    worker.log_in()
+                else:
+                    logging.error("Worker could not be authorized: hub rejected ID card")
+
+            except Exception as E:
+                logging.error(f"An error occurred while logging the worker in:\n{E}")
 
             display.state = 1
 
