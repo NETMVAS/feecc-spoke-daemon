@@ -83,6 +83,10 @@ class HidEventHandler(Resource):
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
+            # development log in
+            if config["developer"]["disable_id_validation"]:
+                worker.log_in()
+
             display.state = 1
 
         # todo

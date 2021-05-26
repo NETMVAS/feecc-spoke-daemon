@@ -11,3 +11,6 @@ api: # settings regarding rest api server
 known_hid_devices: # known attached devices with their full names
   rfid_reader: "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
   barcode_reader: "USB Developer Android"
+
+developer: # do not change when used in production, testing only
+  disable_id_validation: true # skip validating the ID card and authorize anyone regardless of the ID card no.
