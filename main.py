@@ -85,6 +85,9 @@ class HidEventHandler(Resource):
 
             # development log in
             if config["developer"]["disable_id_validation"]:
+                logging.info("Worker authorized regardless of the ID card: development auth is on.")
+                worker.full_name = "Иванов Иван Иванович"
+                worker.position = "Младший инженер"
                 worker.log_in()
 
             display.state = 1
