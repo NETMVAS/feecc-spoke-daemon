@@ -44,7 +44,7 @@ class HidEventHandler(Resource):
         known_hid_devices: tp.Dict[str, str] = config["known_hid_devices"]
         sender = ""  # name of the sender device
 
-        for device in zip(known_hid_devices):
+        for device in zip(known_hid_devices.items()):
             if device[1] == event_dict["name"]:
                 sender = device[0]
                 break

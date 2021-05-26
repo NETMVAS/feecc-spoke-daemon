@@ -9,5 +9,5 @@ api: # settings regarding rest api server
   server_port: 5000 # port for the server to run on
 
 known_hid_devices: # known attached devices with their full names
-  rfid_reader: "sample"
-  barcode_reader: "sample"
+  rfid_reader: "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
+  barcode_reader: "USB Developer Android"
