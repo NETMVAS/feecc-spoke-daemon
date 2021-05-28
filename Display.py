@@ -37,6 +37,12 @@ class Display:
         self.screen_cleanup()
         epd2in13d.epdconfig.module_exit()
 
+    def _save_image(self, image: Image) -> None:
+        """saves image if specified in the config"""
+
+        if self.spoke_config["developer"]["render_images"]:
+            image.save(f"img/state-{self.state}-{str(dt.now())}")
+
     def render_login_screen(self) -> None:
         """displays login screen"""
 
@@ -70,6 +76,7 @@ class Display:
         login_screen_draw.text((self.epd.width - w / 2, block_start + 50 + 3), footer, font=self.font_s, fill=0)
 
         # display the image
+        self._save_image(login_screen)
         self.epd.display(self.epd.getbuffer(login_screen))
 
     def authorization(self):
@@ -96,6 +103,7 @@ class Display:
             auth_screen_draw.text((20 + img_w + 10, floor((self.epd.height - txt_h) / 2) - 15), message, font=self.font_m, fill=0)
 
             # display the image
+            self._save_image(auth_screen)
             self.epd.display(self.epd.getbuffer(auth_screen))
             sleep(5)
 
@@ -128,13 +136,38 @@ class Display:
                 auth_screen_draw.text((20 + img_w + 10, 30), message, font=self.font_m, fill=0)
 
             # display the image
+            self._save_image(auth_screen)
             self.epd.display(self.epd.getbuffer(auth_screen))
             sleep(5)
 
-            # todo
             # switch to barcode await screen
-            pass
+            self.state = 2
             return
+
+    def await_input(self) -> None:
+        # display barcode scan prompt
+        image = Image.new("1", (self.epd.height, self.epd.width), 255)
+        message = "Сканируйте\nштрихкод"
+        footer = f"Авторизован {self.associated_worker.short_name()}"
+        image_draw = ImageDraw.Draw(image)
+        barcode_image = Image.open("img/barcode.png")
+
+        # draw the barcode icon
+        img_h, img_w = (50, 50)
+        barcode_image = barcode_image.resize((img_h, img_w))
+        image_draw.paste(barcode_image, (10, 10))
+
+        # draw the text
+        image_draw.text((10 + img_w + 5, 10), message, font=self.font_l, fill=0)
+
+        # draw the footer
+        footer_h, footer_w = image_draw.textsize(footer, font=self.font_m)
+        image_draw.text((floor(self.epd.width - footer_w / 2), 10 + img_h + 10), footer, font=self.font_m, fill=0)
+
+        # draw the image
+        self._save_image(image_draw)
+        self.epd.display(self.epd.getbuffer(image_draw))
+
 
     def ongoing_operation(self) -> None:
         # Display assembly timer
@@ -151,7 +184,7 @@ class Display:
         time_draw.text((self.epd.width - w / 2, 67), message, font=self.font_s, fill=0, align="center")
         start_time = dt.now()
 
-        while self.state == 2:
+        while self.state == 3:
             timer_delta = dt.now() - start_time
             timer = dt.utcfromtimestamp(timer_delta.total_seconds())
             message = timer.strftime("%H:%M:%S")
@@ -165,6 +198,8 @@ class Display:
             new_image = time_image.crop([nw_w, 30, nw_w + w, 30 + h])
             time_image.paste(new_image, (nw_w, 30))
             self.epd.DisplayPartial(self.epd.getbuffer(time_image))
+
+        self._save_image(time_image)
 
     def run(self):
         """enter an infinite loop to monitor own state changing the output accordingly"""
@@ -183,12 +218,13 @@ class Display:
                     self.authorization()
                     continue
 
-                elif self.state == 2:  # ongoing operation
-                    self.ongoing_operation()
+                elif self.state == 2:  # authorized, await input
+                    self.await_input()
                     continue
 
-                elif self.state == 3:
-                    pass
+                elif self.state == 3:  # ongoing operation
+                    self.ongoing_operation()
+                    continue
 
                 else:
                     logging.error(f"Wrong state: {self.state}. Exiting.")
