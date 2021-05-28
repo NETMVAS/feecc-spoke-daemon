@@ -109,12 +109,16 @@ class HidEventHandler(Resource):
             }
 
             try:
-                response = requests.post(
-                    url=f'{config["endpoints"]["hub_socket"]}/api/passport',
-                    json=payload
-                )
+                if not config["developer"]["disable_barcode_validation"]:
+                    response = requests.post(
+                        url=f'{config["endpoints"]["hub_socket"]}/api/passport',
+                        json=payload
+                    )
 
-                response = response.json()
+                    response = response.json()
+
+                else:
+                    response = {"status": True}
 
                 if response["status"]:
                     # end ongoing operation if there is one
