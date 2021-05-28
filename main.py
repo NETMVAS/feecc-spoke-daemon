@@ -92,15 +92,38 @@ class HidEventHandler(Resource):
 
             display.state = 1
 
-        # todo
         elif sender == "barcode_reader":
             # ignore the event if unauthorized
             if not worker.is_authorized:
                 logging.info(f"Ignoring barcode event: worker not authorized.")
                 return
 
-            # make a request to the hub regarding the ID
+            # make a request to the hub regarding the barcode
             barcode_string = event_dict["string"]
+            logging.info(f"Making a request to hub regarding the barcode {barcode_string}")
+
+            payload = {
+                "barcode_string": barcode_string,
+                "employee_name": worker.full_name,
+                "position": worker.position
+            }
+
+            try:
+                response = requests.post(
+                    url=f'{config["endpoints"]["hub_socket"]}/api/passport',
+                    json=payload
+                )
+
+                response = response.json()
+
+                if response["status"]:
+                    # switch to ongoing operation screen since validation succeeded
+                    display.state = 3
+                else:
+                    logging.error(f"Barcode validation failed: hub returned '{response['comment']}'")
+
+            except Exception as E:
+                logging.error(f"Request to the hub failed:\n{E}")
 
 
 class ResetState(Resource):
