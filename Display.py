@@ -158,14 +158,17 @@ class Display:
         barcode_image = Image.open("img/barcode.png")
 
         # draw the barcode icon
+        logging.debug(f"Drawing the barcode icon")
         img_h, img_w = (50, 50)
         barcode_image = barcode_image.resize((img_h, img_w))
         image_draw.paste(barcode_image, (10, 10))
 
         # draw the text
+        logging.debug(f"Drawing the main message")
         image_draw.text((10 + img_w + 5, 10), message, font=self.font_l, fill=0)
 
         # draw the footer
+        logging.debug(f"Drawing the footer")
         footer_h, footer_w = image_draw.textsize(footer, font=self.font_m)
         image_draw.text((floor(self.epd.width - footer_w / 2), 10 + img_h + 10), footer, font=self.font_m, fill=0)
 
