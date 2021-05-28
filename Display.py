@@ -146,9 +146,14 @@ class Display:
 
     def await_input(self) -> None:
         # display barcode scan prompt
+        logging.info(f"Display barcode scan prompt")
+
         image = Image.new("1", (self.epd.height, self.epd.width), 255)
         message = "Сканируйте\nштрихкод"
+
         footer = f"Авторизован {self.associated_worker.short_name()}"
+        logging.debug(f"Footer: {footer}")
+
         image_draw = ImageDraw.Draw(image)
         barcode_image = Image.open("img/barcode.png")
 
@@ -165,9 +170,9 @@ class Display:
         image_draw.text((floor(self.epd.width - footer_w / 2), 10 + img_h + 10), footer, font=self.font_m, fill=0)
 
         # draw the image
+        logging.info(f"Drawing the await screen image")
         self._save_image(image_draw)
         self.epd.display(self.epd.getbuffer(image_draw))
-
 
     def ongoing_operation(self) -> None:
         # Display assembly timer
