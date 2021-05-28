@@ -41,7 +41,7 @@ class Display:
         """saves image if specified in the config"""
 
         if self.spoke_config["developer"]["render_images"]:
-            image.save(f"img/state-{self.state}-{str(dt.now())}")
+            image.save(f"img/state-{self.state}-{str(dt.now()).split('.')[0]}.png")
 
     def render_login_screen(self) -> None:
         """displays login screen"""
