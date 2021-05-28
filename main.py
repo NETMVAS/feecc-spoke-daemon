@@ -117,8 +117,14 @@ class HidEventHandler(Resource):
                 response = response.json()
 
                 if response["status"]:
-                    # switch to ongoing operation screen since validation succeeded
-                    display.state = 3
+                    # end ongoing operation if there is one
+                    if display.state == 3:
+                        # switch back to await screen
+                        display.state = 2
+
+                    else:
+                        # switch to ongoing operation screen since validation succeeded
+                        display.state = 3
                 else:
                     logging.error(f"Barcode validation failed: hub returned '{response['comment']}'")
 
