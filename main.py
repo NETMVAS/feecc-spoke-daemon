@@ -1,12 +1,14 @@
-from Display import Display
 import atexit
-import threading
 import logging
-import funcs
-import requests
+import threading
 import typing as tp
+
+import requests
 from flask import Flask, request
 from flask_restful import Api, Resource
+
+import funcs
+from Display import Display
 from Worker import Worker
 
 # set up logging
@@ -37,7 +39,7 @@ class HidEventHandler(Resource):
 
     def post(self) -> None:
         # parse the event dict JSON
-        event_dict: dict = request.get_json()
+        event_dict: tp.Dict[str, tp.Any] = request.get_json()
         logging.debug(f"Received event dict:\n{event_dict}")
 
         # identify, from which device the input is coming from
@@ -70,12 +72,12 @@ class HidEventHandler(Resource):
                     json={"rfid_string": event_dict["string"]}
                 )
 
-                response = response.json()
+                response_data = response.json()
 
                 # check if worker authorized and log him in
-                if response["is_valid"]:
-                    worker.full_name = response["employee_name"]
-                    worker.position = response["position"]
+                if response_data["is_valid"]:
+                    worker.full_name = response_data["employee_name"]
+                    worker.position = response_data["position"]
                     worker.log_in()
                 else:
                     logging.error("Worker could not be authorized: hub rejected ID card")
@@ -115,12 +117,12 @@ class HidEventHandler(Resource):
                         json=payload
                     )
 
-                    response = response.json()
+                    response_data = response.json()
 
                 else:
-                    response = {"status": True}
+                    response_data = {"status": True}
 
-                if response["status"]:
+                if response_data["status"]:
                     # end ongoing operation if there is one
                     if display.state == 3:
                         # switch back to await screen
@@ -130,7 +132,7 @@ class HidEventHandler(Resource):
                         # switch to ongoing operation screen since validation succeeded
                         display.state = 3
                 else:
-                    logging.error(f"Barcode validation failed: hub returned '{response['comment']}'")
+                    logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
             except Exception as E:
                 logging.error(f"Request to the hub failed:\n{E}")
@@ -139,7 +141,7 @@ class HidEventHandler(Resource):
 class ResetState(Resource):
     """resets Spoke state back to 0 in case of a corresponding POST request"""
 
-    def post(self) -> dict:
+    def post(self) -> tp.Dict[str, tp.Any]:
         display.state = 0
 
         message = {

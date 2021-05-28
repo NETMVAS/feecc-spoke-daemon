@@ -1,18 +1,21 @@
 import logging
+import typing as tp
 from datetime import datetime as dt
-from PIL import Image, ImageDraw, ImageFont
-from waveshare_epd import epd2in13d
 from math import floor
 from time import sleep
-from funcs import get_own_ip
+
+from PIL import Image, ImageDraw, ImageFont
+
 from Worker import Worker
+from funcs import get_own_ip
+from waveshare_epd import epd2in13d
 
 # Set output log level
 logging.basicConfig(level=logging.DEBUG)
 
 
 class Display:
-    def __init__(self, config: dict, associated_worker: Worker) -> None:
+    def __init__(self, config: tp.Dict[str, tp.Dict[str, tp.Any]], associated_worker: Worker) -> None:
         self.associated_worker: Worker = associated_worker
         self.spoke_config = config
         self.state = 0  # state no as described in architecture docs
@@ -23,7 +26,7 @@ class Display:
         self.font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self.font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
 
-    def screen_cleanup(self) -> None:
+    def _screen_cleanup(self) -> None:
         """clear the screen before and after usage"""
         logging.info("Clearing the screen")
         self.epd.init()
@@ -34,7 +37,7 @@ class Display:
     def end_session(self) -> None:
         """clear the screen if execution is interrupted or script exits"""
 
-        self.screen_cleanup()
+        self._screen_cleanup()
         epd2in13d.epdconfig.module_exit()
 
     def _save_image(self, image: Image) -> None:
@@ -43,7 +46,7 @@ class Display:
         if self.spoke_config["developer"]["render_images"]:
             image.save(f"img/state-{self.state}-{str(dt.now()).split('.')[0]}.png")
 
-    def render_login_screen(self) -> None:
+    def _render_login_screen(self) -> None:
         """displays login screen"""
 
         logging.info("Display login screen")
@@ -79,7 +82,7 @@ class Display:
         self._save_image(login_screen)
         self.epd.display(self.epd.getbuffer(login_screen))
 
-    def authorization(self):
+    def _authorization(self) -> None:
         """displays authorization screen"""
 
         logging.info("Display authorization screen")
@@ -87,7 +90,7 @@ class Display:
         # init image
         auth_screen = Image.new("1", (self.epd.height, self.epd.width), 255)
         auth_screen_draw = ImageDraw.Draw(auth_screen)
-        
+
         if not self.associated_worker.is_authorized:
             # display a message about failed authorization
 
@@ -100,7 +103,12 @@ class Display:
             # draw the message
             message = "Авторизация\nне пройдена"
             txt_h, txt_w = auth_screen_draw.textsize(message, self.font_m)
-            auth_screen_draw.text((20 + img_w + 10, floor((self.epd.height - txt_h) / 2) - 15), message, font=self.font_m, fill=0)
+            auth_screen_draw.text(
+                (20 + img_w + 10, floor((self.epd.height - txt_h) / 2) - 15),
+                message,
+                font=self.font_m,
+                fill=0
+            )
 
             # display the image
             self._save_image(auth_screen)
@@ -125,14 +133,12 @@ class Display:
                 message = f"Авторизован\n{self.associated_worker.position}\n{self.associated_worker.short_name()}"
 
                 # draw the message
-                txt_h, txt_w = auth_screen_draw.textsize(message, self.font_s)
                 auth_screen_draw.text((20 + img_w + 10, 30), message, font=self.font_s, fill=0)
 
             except KeyError:
                 message = "Успешная\nавторизация"
 
                 # draw the message
-                txt_h, txt_w = auth_screen_draw.textsize(message, self.font_m)
                 auth_screen_draw.text((20 + img_w + 10, 30), message, font=self.font_m, fill=0)
 
             # display the image
@@ -144,7 +150,7 @@ class Display:
             self.state = 2
             return
 
-    def await_input(self) -> None:
+    def _await_input(self) -> None:
         # display barcode scan prompt
         logging.info(f"Display barcode scan prompt")
 
@@ -177,7 +183,7 @@ class Display:
         self._save_image(image_draw)
         self.epd.display(self.epd.getbuffer(image_draw))
 
-    def ongoing_operation(self) -> None:
+    def _ongoing_operation(self) -> None:
         # Display assembly timer
         logging.info("Display assembly timer")
         time_image = Image.new("1", (self.epd.height, self.epd.width), 255)
@@ -209,31 +215,23 @@ class Display:
 
         self._save_image(time_image)
 
-    def run(self):
+    def run(self) -> None:
         """enter an infinite loop to monitor own state changing the output accordingly"""
 
         while True:
             if self.latest_known_state != self.state:
                 logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
                 self.latest_known_state = self.state
-                self.screen_cleanup()
+                self._screen_cleanup()
 
                 if self.state == 0:  # login screen
-                    self.render_login_screen()
-                    continue
-
+                    self._render_login_screen()
                 elif self.state == 1:  # authorization status and awaiting barcode event
-                    self.authorization()
-                    continue
-
+                    self._authorization()
                 elif self.state == 2:  # authorized, await input
-                    self.await_input()
-                    continue
-
+                    self._await_input()
                 elif self.state == 3:  # ongoing operation
-                    self.ongoing_operation()
-                    continue
-
+                    self._ongoing_operation()
                 else:
                     logging.error(f"Wrong state: {self.state}. Exiting.")
                     exit()
