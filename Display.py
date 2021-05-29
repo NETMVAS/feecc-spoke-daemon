@@ -6,8 +6,8 @@ from time import sleep
 
 from PIL import Image, ImageDraw, ImageFont
 
+from Spoke import Spoke
 from Worker import Worker
-from funcs import get_own_ip
 from waveshare_epd import epd2in13d
 
 # Set output log level
@@ -15,13 +15,17 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Display:
-    def __init__(self, config: tp.Dict[str, tp.Dict[str, tp.Any]], associated_worker: Worker) -> None:
+    def __init__(
+            self,
+            associated_worker: Worker,
+            associated_spoke: Spoke
+    ) -> None:
         self.associated_worker: Worker = associated_worker
-        self.spoke_config = config
+        self.associated_spoke: Spoke = associated_spoke
+        self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
         self.state = 0  # state no as described in architecture docs
         self.latest_known_state = -1
         self.epd = epd2in13d.EPD()
-        self.ipv4 = get_own_ip()
         self.font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
         self.font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self.font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
@@ -72,8 +76,10 @@ class Display:
 
         # draw the footer
         footer = f"spoke no.{self.spoke_config['general']['spoke_num']}"
-        if self.ipv4:
-            footer += f". IPv4: {self.ipv4}"
+        ipv4 = self.associated_spoke.ipv4()
+
+        if ipv4:
+            footer += f". IPv4: {ipv4}"
 
         w, h = login_screen_draw.textsize(footer, self.font_s)
         login_screen_draw.text((self.epd.width - w / 2, block_start + 50 + 3), footer, font=self.font_s, fill=0)

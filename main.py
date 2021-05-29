@@ -7,8 +7,8 @@ import requests
 from flask import Flask, request
 from flask_restful import Api, Resource
 
-import funcs
 from Display import Display
+from Spoke import Spoke
 from Worker import Worker
 
 # set up logging
@@ -18,9 +18,9 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s: %(message)s"
 )
 
-config: tp.Dict[str, tp.Dict[str, tp.Any]] = funcs.read_configuration("config.yaml")  # parse configuration
+spoke = Spoke()  # initialize Spoke object
 worker = Worker()  # create Worker object
-display: Display = Display(config, worker)  # instantiate Display
+display: Display = Display(worker, spoke)  # instantiate Display
 display_thread: threading.Thread = threading.Thread(target=display.run)  # make a thread for the display to run in
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
@@ -43,7 +43,7 @@ class HidEventHandler(Resource):
         logging.debug(f"Received event dict:\n{event_dict}")
 
         # identify, from which device the input is coming from
-        known_hid_devices: tp.Dict[str, str] = config["known_hid_devices"]
+        known_hid_devices: tp.Dict[str, str] = spoke.config["known_hid_devices"]
         sender = ""  # name of the sender device
 
         for sender_name, device_name in known_hid_devices.items():
@@ -68,7 +68,7 @@ class HidEventHandler(Resource):
             # make a call to authorize the worker otherwise
             try:
                 response = requests.post(
-                    url=f'{config["endpoints"]["hub_socket"]}/api/validator',
+                    url=f'{spoke.config["endpoints"]["hub_socket"]}/api/validator',
                     json={"rfid_string": event_dict["string"]}
                 )
 
@@ -86,7 +86,7 @@ class HidEventHandler(Resource):
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
             # development log in
-            if config["developer"]["disable_id_validation"]:
+            if spoke.config["developer"]["disable_id_validation"]:
                 logging.info("Worker authorized regardless of the ID card: development auth is on.")
                 worker.full_name = "Иванов Иван Иванович"
                 worker.position = "Младший инженер"
@@ -108,13 +108,13 @@ class HidEventHandler(Resource):
                 "barcode_string": barcode_string,
                 "employee_name": worker.full_name,
                 "position": worker.position,
-                "spoke_num": config["general"]["spoke_num"]
+                "spoke_num": spoke.config["general"]["spoke_num"]
             }
 
             try:
-                if not config["developer"]["disable_barcode_validation"]:
+                if not spoke.config["developer"]["disable_barcode_validation"]:
                     response = requests.post(
-                        url=f'{config["endpoints"]["hub_socket"]}/api/passport',
+                        url=f'{spoke.config["endpoints"]["hub_socket"]}/api/passport',
                         json=payload
                     )
 
@@ -161,6 +161,6 @@ api.add_resource(ResetState, "/api/reset_state")
 if __name__ == "__main__":
     display_thread.start()  # start the display daemon
     app.run(  # start the server
-        host=config["api"]["server_ip"],
-        port=config["api"]["server_port"]
+        host=spoke.config["api"]["server_ip"],
+        port=spoke.config["api"]["server_port"]
     )
