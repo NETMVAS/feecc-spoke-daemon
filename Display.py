@@ -189,8 +189,8 @@ class Display:
 
         # draw the image
         logging.info(f"Drawing the await screen image")
-        self._save_image(image_draw)
-        self.epd.display(self.epd.getbuffer(image_draw))
+        self._save_image(image)
+        self.epd.display(self.epd.getbuffer(image))
 
     def _ongoing_operation(self) -> None:
         # Display assembly timer
