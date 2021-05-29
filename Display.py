@@ -176,7 +176,7 @@ class Display:
         logging.debug(f"Drawing the barcode icon")
         img_h, img_w = (50, 50)
         barcode_image = barcode_image.resize((img_h, img_w))
-        image_draw.paste(barcode_image, (10, 10))
+        image.paste(barcode_image, (10, 10))
 
         # draw the text
         logging.debug(f"Drawing the main message")
