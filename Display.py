@@ -30,6 +30,9 @@ class Display:
         self.font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self.font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
 
+        # clear the screen at the first start in case it has leftover images on it
+        self._screen_cleanup()
+
     def _screen_cleanup(self) -> None:
         """clear the screen before and after usage"""
         logging.info("Clearing the screen")
@@ -228,7 +231,6 @@ class Display:
             if self.latest_known_state != self.state:
                 logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
                 self.latest_known_state = self.state
-                self._screen_cleanup()
 
                 if self.state == 0:  # login screen
                     self._render_login_screen()
