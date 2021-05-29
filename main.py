@@ -107,7 +107,8 @@ class HidEventHandler(Resource):
             payload = {
                 "barcode_string": barcode_string,
                 "employee_name": worker.full_name,
-                "position": worker.position
+                "position": worker.position,
+                "spoke_num": config["general"]["spoke_num"]
             }
 
             try:
