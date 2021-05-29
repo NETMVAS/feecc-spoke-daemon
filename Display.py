@@ -180,12 +180,12 @@ class Display:
 
         # draw the text
         logging.debug(f"Drawing the main message")
-        image_draw.text((10 + img_w + 5, 10), message, font=self.font_l, fill=0)
+        image_draw.text((10 + img_w + 5, 10), message, font=self.font_m, fill=0)
 
         # draw the footer
         logging.debug(f"Drawing the footer")
-        footer_h, footer_w = image_draw.textsize(footer, font=self.font_m)
-        image_draw.text((floor(self.epd.width - footer_w / 2), 10 + img_h + 10), footer, font=self.font_m, fill=0)
+        footer_h, footer_w = image_draw.textsize(footer, font=self.font_s)
+        image_draw.text((floor(self.epd.width - footer_w / 2), 10 + img_h + 10), footer, font=self.font_s, fill=0)
 
         # draw the image
         logging.info(f"Drawing the await screen image")
