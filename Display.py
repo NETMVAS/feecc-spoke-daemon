@@ -1,4 +1,5 @@
 import logging
+import threading
 import typing as tp
 from datetime import datetime as dt
 from math import floor
@@ -26,9 +27,14 @@ class Display:
         self.state = 0  # state no as described in architecture docs
         self.latest_known_state = -1
         self.epd = epd2in13d.EPD()
+
+        # fonts
         self.font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
         self.font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self.font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
+
+        # thread for the display to run in
+        self.display_thread: tp.Optional[threading.Thread] = threading.Thread(target=self._handle_state_change())
 
         # clear the screen at the first start in case it has leftover images on it
         self._screen_cleanup()
@@ -224,22 +230,27 @@ class Display:
 
         self._save_image(time_image)
 
-    def run(self) -> None:
-        """enter an infinite loop to monitor own state changing the output accordingly"""
+    def _handle_state_change(self) -> None:
+        """handle state changing and change the output accordingly"""
 
-        while True:
-            if self.latest_known_state != self.state:
-                logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
-                self.latest_known_state = self.state
+        if self.latest_known_state != self.state:
+            logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
+            self.latest_known_state = self.state
 
-                if self.state == 0:  # login screen
-                    self._render_login_screen()
-                elif self.state == 1:  # authorization status and awaiting barcode event
-                    self._authorization()
-                elif self.state == 2:  # authorized, await input
-                    self._await_input()
-                elif self.state == 3:  # ongoing operation
-                    self._ongoing_operation()
-                else:
-                    logging.error(f"Wrong state: {self.state}. Exiting.")
-                    exit()
+            if self.state == 0:  # login screen
+                self._render_login_screen()
+            elif self.state == 1:  # authorization status and awaiting barcode event
+                self._authorization()
+            elif self.state == 2:  # authorized, await input
+                self._await_input()
+            elif self.state == 3:  # ongoing operation
+                self._ongoing_operation()
+            else:
+                logging.error(f"Wrong state: {self.state}. Exiting.")
+                exit()
+
+    def change_state(self, new_state_no: int) -> None:
+        """handle display state change in a separate thread"""
+
+        self.state = new_state_no
+        self.display_thread.start()  # start the display daemon

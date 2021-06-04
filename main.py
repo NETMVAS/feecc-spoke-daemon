@@ -1,6 +1,5 @@
 import atexit
 import logging
-import threading
 import typing as tp
 
 import requests
@@ -21,7 +20,6 @@ logging.basicConfig(
 spoke = Spoke()  # initialize Spoke object
 worker = Worker()  # create Worker object
 display: Display = Display(worker, spoke)  # instantiate Display
-display_thread: threading.Thread = threading.Thread(target=display.run)  # make a thread for the display to run in
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
 
@@ -31,7 +29,7 @@ def end_session() -> None:
     """clear the display, release SPI and join the thread before exiting"""
 
     display.end_session()
-    display_thread.join(timeout=1)
+    display.display_thread.join(timeout=1)
 
 
 class HidEventHandler(Resource):
@@ -62,7 +60,7 @@ class HidEventHandler(Resource):
             # if worker is logged in - log him out
             if worker.is_authorized:
                 worker.log_out()
-                display.state = 0
+                display.change_state(0)
                 return
 
             # make a call to authorize the worker otherwise
@@ -92,7 +90,7 @@ class HidEventHandler(Resource):
                 worker.position = "Младший инженер"
                 worker.log_in()
 
-            display.state = 1
+            display.change_state(1)
 
         elif sender == "barcode_reader":
             # ignore the event if unauthorized
@@ -127,11 +125,11 @@ class HidEventHandler(Resource):
                     # end ongoing operation if there is one
                     if display.state == 3:
                         # switch back to await screen
-                        display.state = 2
+                        display.change_state(2)
 
                     else:
                         # switch to ongoing operation screen since validation succeeded
-                        display.state = 3
+                        display.change_state(3)
                 else:
                     logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
@@ -143,7 +141,7 @@ class ResetState(Resource):
     """resets Spoke state back to 0 in case of a corresponding POST request"""
 
     def post(self) -> tp.Dict[str, tp.Any]:
-        display.state = 0
+        display.change_state(0)
 
         message = {
             "status": 200,
@@ -159,7 +157,6 @@ api.add_resource(ResetState, "/api/reset_state")
 
 # entry point
 if __name__ == "__main__":
-    display_thread.start()  # start the display daemon
     app.run(  # start the server
         host=spoke.config["api"]["server_ip"],
         port=spoke.config["api"]["server_port"]
