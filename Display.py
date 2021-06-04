@@ -25,7 +25,7 @@ class Display:
         self.associated_spoke: Spoke = associated_spoke
         self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
         self.state = 0  # state no as described in architecture docs
-        self.latest_known_state = 0
+        self.latest_known_state = -1
         self.epd = epd2in13d.EPD()
 
         # fonts
@@ -34,7 +34,7 @@ class Display:
         self.font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
 
         # thread for the display to run in
-        self.display_thread: tp.Optional[threading.Thread] = threading.Thread(target=self._handle_state_change())
+        self.display_thread: tp.Optional[threading.Thread] = None
 
         # clear the screen at the first start in case it has leftover images on it
         self._screen_cleanup()
@@ -253,4 +253,9 @@ class Display:
         """handle display state change in a separate thread"""
 
         self.state = new_state_no
-        self.display_thread.start()  # start the display daemon
+
+        if self.display_thread is None:
+            self.display_thread = threading.Thread(target=self._handle_state_change)
+            self.display_thread.start()
+        else:
+            self.display_thread.run()  # handle the state change in a separate thread
