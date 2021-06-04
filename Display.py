@@ -35,6 +35,7 @@ class Display:
 
         # thread for the display to run in
         self.display_thread: tp.Optional[threading.Thread] = None
+        self._display_busy: bool = False
 
         # clear the screen at the first start in case it has leftover images on it
         self._screen_cleanup()
@@ -233,6 +234,8 @@ class Display:
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
 
+        self._display_busy = True  # raise the flag
+
         while self.state != self.latest_known_state:
             logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
             self.latest_known_state = self.state
@@ -249,8 +252,14 @@ class Display:
                 logging.error(f"Wrong state: {self.state}. Exiting.")
                 exit()
 
+        self._display_busy = False  # remove the flag
+
     def change_state(self, new_state_no: int) -> None:
         """handle display state change in a separate thread"""
+
+        # wait for the ongoing operation to finish to avoid overwhelming the display
+        while self._display_busy:
+            sleep(1)
 
         self.state = new_state_no
         self.display_thread = threading.Thread(target=self._handle_state_change)
