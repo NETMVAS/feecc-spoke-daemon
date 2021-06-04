@@ -157,6 +157,7 @@ api.add_resource(ResetState, "/api/reset_state")
 
 # entry point
 if __name__ == "__main__":
+    display.change_state(0)
     app.run(  # start the server
         host=spoke.config["api"]["server_ip"],
         port=spoke.config["api"]["server_port"]

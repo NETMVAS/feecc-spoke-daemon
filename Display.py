@@ -25,7 +25,7 @@ class Display:
         self.associated_spoke: Spoke = associated_spoke
         self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
         self.state = 0  # state no as described in architecture docs
-        self.latest_known_state = -1
+        self.latest_known_state = 0
         self.epd = epd2in13d.EPD()
 
         # fonts
@@ -233,7 +233,7 @@ class Display:
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
 
-        if self.latest_known_state != self.state:
+        if self.state:
             logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
             self.latest_known_state = self.state
 
