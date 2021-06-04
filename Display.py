@@ -257,10 +257,11 @@ class Display:
     def change_state(self, new_state_no: int) -> None:
         """handle display state change in a separate thread"""
 
+        self.state = new_state_no
+
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
             sleep(1)
 
-        self.state = new_state_no
         self.display_thread = threading.Thread(target=self._handle_state_change)
         self.display_thread.start()  # handle the state change in a separate thread
