@@ -3,6 +3,7 @@ import sys
 import yaml
 import logging
 import subprocess
+import requests
 
 
 class Spoke:
@@ -11,6 +12,27 @@ class Spoke:
     def __init__(self):
         self.config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._read_configuration()
         self.recording_in_progress: bool = False
+        self.latest_barcode_payload: tp.Optional[tp.Any] = None
+
+    def submit_barcode(self, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, str]:
+        response = requests.post(
+            url=f'{self.config["endpoints"]["hub_socket"]}/api/passport',
+            json=payload
+        )
+
+        response_data = response.json()
+
+        return response_data
+
+    def submit_rfid(self, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, str]:
+        response = requests.post(
+            url=f'{self.config["endpoints"]["hub_socket"]}/api/validator',
+            json=payload
+        )
+
+        response_data = response.json()
+
+        return response_data
 
     @staticmethod
     def ipv4() -> str:

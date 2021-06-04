@@ -2,7 +2,6 @@ import atexit
 import logging
 import typing as tp
 
-import requests
 from flask import Flask, request
 from flask_restful import Api, Resource
 
@@ -59,18 +58,21 @@ class HidEventHandler(Resource):
         if sender == "rfid_reader":
             # if worker is logged in - log him out
             if worker.is_authorized:
+                # if there is an ongoing operation - end it
+
+                if spoke.recording_in_progress:
+                    payload = spoke.latest_barcode_payload
+                    spoke.submit_barcode(payload)
+                    spoke.recording_in_progress = False
+
                 worker.log_out()
                 display.change_state(0)
                 return
 
             # make a call to authorize the worker otherwise
             try:
-                response = requests.post(
-                    url=f'{spoke.config["endpoints"]["hub_socket"]}/api/validator',
-                    json={"rfid_string": event_dict["string"]}
-                )
-
-                response_data = response.json()
+                payload = {"rfid_string": event_dict["string"]}
+                response_data = spoke.submit_rfid(payload)
 
                 # check if worker authorized and log him in
                 if response_data["is_valid"]:
@@ -111,12 +113,13 @@ class HidEventHandler(Resource):
 
             try:
                 if not spoke.config["developer"]["disable_barcode_validation"]:
-                    response = requests.post(
-                        url=f'{spoke.config["endpoints"]["hub_socket"]}/api/passport',
-                        json=payload
-                    )
+                    response_data = spoke.submit_barcode(payload)
+                    spoke.recording_in_progress = not spoke.recording_in_progress
 
-                    response_data = response.json()
+                    if spoke.recording_in_progress:
+                        spoke.latest_barcode_payload = payload
+                    else:
+                        spoke.latest_barcode_payload = None
 
                 else:
                     response_data = {"status": True}
