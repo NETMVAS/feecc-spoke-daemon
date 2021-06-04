@@ -253,9 +253,5 @@ class Display:
         """handle display state change in a separate thread"""
 
         self.state = new_state_no
-
-        if self.display_thread is None:
-            self.display_thread = threading.Thread(target=self._handle_state_change)
-            self.display_thread.start()
-        else:
-            self.display_thread.run()  # handle the state change in a separate thread
+        self.display_thread = threading.Thread(target=self._handle_state_change)
+        self.display_thread.start()  # handle the state change in a separate thread
