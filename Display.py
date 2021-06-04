@@ -233,9 +233,8 @@ class Display:
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
 
-        if self.state:
+        while self.state != self.latest_known_state:
             logging.info(f"Display state changed from {self.latest_known_state} to {self.state}")
-            self.latest_known_state = self.state
 
             if self.state == 0:  # login screen
                 self._render_login_screen()
@@ -248,6 +247,8 @@ class Display:
             else:
                 logging.error(f"Wrong state: {self.state}. Exiting.")
                 exit()
+
+        self.latest_known_state = self.state
 
     def change_state(self, new_state_no: int) -> None:
         """handle display state change in a separate thread"""
