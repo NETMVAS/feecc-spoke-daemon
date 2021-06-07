@@ -42,14 +42,14 @@ class HidEventHandler(Resource):
         sender = spoke.identify_sender(event_dict["name"])
 
         if sender == "rfid_reader":
-            self.handle_rfid_event(event_dict)
+            self._handle_rfid_event(event_dict)
         elif sender == "barcode_reader":
-            self.handle_barcode_event(event_dict)
+            self._handle_barcode_event(event_dict)
         else:
             logging.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
 
     @staticmethod
-    def handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
+    def _handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
         # ignore the event if unauthorized
         if not worker.is_authorized:
             logging.info(f"Ignoring barcode event: worker not authorized.")
@@ -88,7 +88,7 @@ class HidEventHandler(Resource):
             logging.error(f"Request to the hub failed:\n{E}")
 
     @staticmethod
-    def handle_rfid_event(event_dict: tp.Dict[str, tp.Any]) -> None:
+    def _handle_rfid_event(event_dict: tp.Dict[str, tp.Any]) -> None:
         # if worker is logged in - log him out
         if worker.is_authorized:
             spoke.end_recording()

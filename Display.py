@@ -37,13 +37,17 @@ class Display:
         # clear the screen at the first start in case it has leftover images on it
         self._screen_cleanup()
 
-    def _screen_cleanup(self) -> None:
-        """clear the screen before and after usage"""
-        logging.info("Clearing the screen")
-        self._epd.init()
-        self._epd.Clear(0x00)  # fill with black to remove stuck pixels
-        self._epd.Clear(0xFF)  # fill with white
-        logging.debug("Finished clearing the screen")
+    def change_state(self, new_state_no: int) -> None:
+        """handle display state change in a separate thread"""
+
+        self.state = new_state_no
+
+        # wait for the ongoing operation to finish to avoid overwhelming the display
+        while self._display_busy:
+            sleep(0.5)
+
+        self._display_thread = threading.Thread(target=self._handle_state_change)
+        self._display_thread.start()  # handle the state change in a separate thread
 
     def end_session(self) -> None:
         """clear the screen if execution is interrupted or script exits"""
@@ -51,6 +55,14 @@ class Display:
         self._screen_cleanup()
         epd2in13d.epdconfig.module_exit()
         self._display_thread.join(timeout=1)
+
+    def _screen_cleanup(self) -> None:
+        """clear the screen before and after usage"""
+        logging.info("Clearing the screen")
+        self._epd.init()
+        self._epd.Clear(0x00)  # fill with black to remove stuck pixels
+        self._epd.Clear(0xFF)  # fill with white
+        logging.debug("Finished clearing the screen")
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
@@ -251,15 +263,3 @@ class Display:
                 exit()
 
         self._display_busy = False  # remove the flag
-
-    def change_state(self, new_state_no: int) -> None:
-        """handle display state change in a separate thread"""
-
-        self.state = new_state_no
-
-        # wait for the ongoing operation to finish to avoid overwhelming the display
-        while self._display_busy:
-            sleep(0.5)
-
-        self._display_thread = threading.Thread(target=self._handle_state_change)
-        self._display_thread.start()  # handle the state change in a separate thread
