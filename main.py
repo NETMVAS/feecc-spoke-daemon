@@ -5,8 +5,9 @@ import typing as tp
 from flask import Flask, request
 from flask_restful import Api, Resource
 
-from Display import Display, LoginScreen, AwaitInputScreen, OngoingOperationScreen, AuthorizationScreen
+from Display import Display
 from Spoke import Spoke
+from Views import LoginScreen, AwaitInputScreen, OngoingOperationScreen, AuthorizationScreen
 from Worker import Worker
 
 # set up logging
