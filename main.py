@@ -39,36 +39,82 @@ class HidEventHandler(Resource):
         event_dict: tp.Dict[str, tp.Any] = request.get_json()
         logging.debug(f"Received event dict:\n{event_dict}")
 
-        # identify, from which device the input is coming from
-        known_hid_devices: tp.Dict[str, str] = spoke.config["known_hid_devices"]
-        sender = ""  # name of the sender device
+        # handle the event in accord with it's source
+        sender = spoke.identify_sender(event_dict["name"])
 
-        for sender_name, device_name in known_hid_devices.items():
-            if device_name == event_dict["name"]:
-                sender = sender_name
-                break
-
-        if not sender:
+        if sender == "rfid_reader":
+            self.handle_rfid_event(event_dict)
+        elif sender == "barcode_reader":
+            self.handle_barcode_event(event_dict)
+        else:
             logging.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
+
+    @staticmethod
+    def handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
+        # ignore the event if unauthorized
+        if not worker.is_authorized:
+            logging.info(f"Ignoring barcode event: worker not authorized.")
             return
 
-        global worker, display
+        # make a request to the hub regarding the barcode
+        barcode_string = event_dict["string"]
+        logging.info(f"Making a request to hub regarding the barcode {barcode_string}")
 
-        # handle the event in accord with it's source
-        if sender == "rfid_reader":
-            # if worker is logged in - log him out
-            if worker.is_authorized:
-                # if there is an ongoing operation - end it
+        payload = {
+            "barcode_string": barcode_string,
+            "employee_name": worker.full_name,
+            "position": worker.position,
+            "spoke_num": spoke.config["general"]["spoke_num"]
+        }
+
+        try:
+            if not spoke.config["developer"]["disable_barcode_validation"]:
+                response_data = spoke.submit_barcode(payload)
+                spoke.recording_in_progress = not spoke.recording_in_progress
 
                 if spoke.recording_in_progress:
-                    payload = spoke.latest_barcode_payload
-                    spoke.submit_barcode(payload)
-                    spoke.recording_in_progress = False
+                    spoke.latest_barcode_payload = payload
+                else:
+                    spoke.latest_barcode_payload = None
 
-                worker.log_out()
-                display.change_state(0)
-                return
+            else:
+                response_data = {"status": True}
 
+            if response_data["status"]:
+                # end ongoing operation if there is one
+                if display.state == 3:
+                    # switch back to await screen
+                    display.change_state(2)
+
+                else:
+                    # switch to ongoing operation screen since validation succeeded
+                    display.change_state(3)
+            else:
+                logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
+
+        except Exception as E:
+            logging.error(f"Request to the hub failed:\n{E}")
+
+    @staticmethod
+    def handle_rfid_event(event_dict: tp.Dict[str, tp.Any]) -> None:
+        # if worker is logged in - log him out
+        if worker.is_authorized:
+            # if there is an ongoing operation - end it
+            if spoke.recording_in_progress:
+                spoke.end_recording()
+
+            worker.log_out()
+            display.change_state(0)
+            return
+
+        # perform development log in if set in config
+        if spoke.config["developer"]["disable_id_validation"]:
+            logging.info("Worker authorized regardless of the ID card: development auth is on.")
+            worker.full_name = "Иванов Иван Иванович"
+            worker.position = "Младший инженер"
+            worker.log_in()
+
+        else:
             # make a call to authorize the worker otherwise
             try:
                 payload = {"rfid_string": event_dict["string"]}
@@ -85,65 +131,14 @@ class HidEventHandler(Resource):
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
-            # development log in
-            if spoke.config["developer"]["disable_id_validation"]:
-                logging.info("Worker authorized regardless of the ID card: development auth is on.")
-                worker.full_name = "Иванов Иван Иванович"
-                worker.position = "Младший инженер"
-                worker.log_in()
-
-            display.change_state(1)
-
-        elif sender == "barcode_reader":
-            # ignore the event if unauthorized
-            if not worker.is_authorized:
-                logging.info(f"Ignoring barcode event: worker not authorized.")
-                return
-
-            # make a request to the hub regarding the barcode
-            barcode_string = event_dict["string"]
-            logging.info(f"Making a request to hub regarding the barcode {barcode_string}")
-
-            payload = {
-                "barcode_string": barcode_string,
-                "employee_name": worker.full_name,
-                "position": worker.position,
-                "spoke_num": spoke.config["general"]["spoke_num"]
-            }
-
-            try:
-                if not spoke.config["developer"]["disable_barcode_validation"]:
-                    response_data = spoke.submit_barcode(payload)
-                    spoke.recording_in_progress = not spoke.recording_in_progress
-
-                    if spoke.recording_in_progress:
-                        spoke.latest_barcode_payload = payload
-                    else:
-                        spoke.latest_barcode_payload = None
-
-                else:
-                    response_data = {"status": True}
-
-                if response_data["status"]:
-                    # end ongoing operation if there is one
-                    if display.state == 3:
-                        # switch back to await screen
-                        display.change_state(2)
-
-                    else:
-                        # switch to ongoing operation screen since validation succeeded
-                        display.change_state(3)
-                else:
-                    logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
-
-            except Exception as E:
-                logging.error(f"Request to the hub failed:\n{E}")
+        display.change_state(1)
 
 
 class ResetState(Resource):
     """resets Spoke state back to 0 in case of a corresponding POST request"""
 
-    def post(self) -> tp.Dict[str, tp.Any]:
+    @staticmethod
+    def post() -> tp.Dict[str, tp.Any]:
         display.change_state(0)
 
         message = {

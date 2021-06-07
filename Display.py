@@ -60,7 +60,7 @@ class Display:
         if self.spoke_config["developer"]["render_images"]:
             image.save(f"img/state-{self.state}-{str(dt.now()).split('.')[0]}.png")
 
-    def _render_login_screen(self) -> None:
+    def _login_screen(self) -> None:
         """displays login screen"""
 
         logging.info("Display login screen")
@@ -129,7 +129,7 @@ class Display:
             # display the image
             self._save_image(auth_screen)
             self.epd.display(self.epd.getbuffer(auth_screen))
-            sleep(5)
+            sleep(3)
 
             # since authorization failed switch back to login screen
             self.state = 0
@@ -160,7 +160,7 @@ class Display:
             # display the image
             self._save_image(auth_screen)
             self.epd.display(self.epd.getbuffer(auth_screen))
-            sleep(5)
+            sleep(3)
 
             # switch to barcode await screen
             self.state = 2
@@ -241,7 +241,7 @@ class Display:
             self.latest_known_state = self.state
 
             if self.state == 0:  # login screen
-                self._render_login_screen()
+                self._login_screen()
             elif self.state == 1:  # authorization status and awaiting barcode event
                 self._authorization()
             elif self.state == 2:  # authorized, await input
