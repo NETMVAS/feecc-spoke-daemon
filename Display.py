@@ -1,6 +1,7 @@
 import logging
 import threading
 import typing as tp
+from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from math import floor
 from time import sleep
@@ -15,32 +16,38 @@ from waveshare_epd import epd2in13d
 logging.basicConfig(level=logging.DEBUG)
 
 
-class Display:
-    def __init__(self, associated_worker: Worker, associated_spoke: Spoke) -> None:
-        self.state = 0  # state no as described in architecture docs
+# This set of classes implements the "State" pattern
+# refer to https://refactoring.guru/ru/design-patterns/state
+# for more information on it's principles
 
+
+class Display:
+    """the context class"""
+
+    def __init__(self, associated_worker: Worker, associated_spoke: Spoke) -> None:
+        self._state: tp.Optional[View] = None  # a View type of object which is responsible for the state
+        self._latest_known_state: tp.Optional[View] = None
         self._associated_worker: Worker = associated_worker
         self._associated_spoke: Spoke = associated_spoke
         self._spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._associated_spoke.config
-        self._latest_known_state = -1
         self._epd = epd2in13d.EPD()
-
-        # fonts
-        self._font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
-        self._font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
-        self._font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
 
         # thread for the display to run in
         self._display_thread: tp.Optional[threading.Thread] = None
         self._display_busy: bool = False
 
         # clear the screen at the first start in case it has leftover images on it
-        self._screen_cleanup()
+        self.render_view(BlankScreen)
 
-    def change_state(self, new_state_no: int) -> None:
-        """handle display state change in a separate thread"""
+    def render_view(self, new_state) -> None:
+        """
+        handle display state change in a separate thread
+        :param new_state: object of type View to be displayed
+        :return:
+        """
 
-        self.state = new_state_no
+        self._state = new_state
+        self._state._display = self
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
@@ -52,27 +59,77 @@ class Display:
     def end_session(self) -> None:
         """clear the screen if execution is interrupted or script exits"""
 
-        self._screen_cleanup()
+        self.render_view(BlankScreen)
         epd2in13d.epdconfig.module_exit()
         self._display_thread.join(timeout=1)
 
-    def _screen_cleanup(self) -> None:
-        """clear the screen before and after usage"""
-        logging.info("Clearing the screen")
-        self._epd.init()
-        self._epd.Clear(0x00)  # fill with black to remove stuck pixels
-        self._epd.Clear(0xFF)  # fill with white
-        logging.debug("Finished clearing the screen")
+    def _handle_state_change(self) -> None:
+        """handle state changing and change the output accordingly"""
+
+        self._display_busy = True  # raise the flag
+
+        while self._state != self._latest_known_state:
+            logging.info(
+                f"View changed from {self._latest_known_state.__class__.__name__} to {self._state.__class__.__name__}"
+            )
+            self._latest_known_state = self._state
+            self._state.display()
+
+        self._display_busy = False  # remove the flag
+
+    @property
+    def spoke_config(self):
+        return self._spoke_config
+
+    @property
+    def associated_spoke(self):
+        return self._associated_spoke
+
+    @property
+    def epd(self):
+        return self._epd
+
+    @property
+    def associated_worker(self):
+        return self._associated_worker
+
+    @property
+    def state(self):
+        return self._state
+
+
+class View(ABC):
+    """
+    abstract base class for all the views (states) to inherit from. 
+    each view is responsible for an image drawn on the screen
+    """
+
+    def __init__(self) -> None:
+        self._display: tp.Optional[Display] = None
+        self._epd = self._display.epd
+
+        # fonts
+        self._font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
+        self._font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
+        self._font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
 
-        if self._spoke_config["developer"]["render_images"]:
-            image.save(f"img/state-{self.state}-{str(dt.now()).split('.')[0]}.png")
+        if self._display.spoke_config["developer"]["render_images"]:
+            image.save(f"img/state-{self.__class__.__name__}-{str(dt.now()).split('.')[0]}.png")
 
-    def _login_screen(self) -> None:
-        """displays login screen"""
+    @abstractmethod
+    def display(self) -> None:
+        """a universal method that constructs the view and draws it onto a screen"""
 
+        pass
+
+
+class LoginScreen(View):
+    """displays login screen"""
+
+    def display(self) -> None:
         logging.info("Display login screen")
 
         # init image
@@ -95,8 +152,8 @@ class Display:
         login_screen_draw.text((35 + 50 + 10, block_start), message, font=self._font_s, fill=0)
 
         # draw the footer
-        footer = f"spoke no.{self._spoke_config['general']['spoke_num']}"
-        ipv4 = self._associated_spoke.ipv4()
+        footer = f"spoke no.{self._display.spoke_config['general']['spoke_num']}"
+        ipv4 = self._display.associated_spoke.ipv4()
 
         if ipv4:
             footer += f". IPv4: {ipv4}"
@@ -108,16 +165,18 @@ class Display:
         self._save_image(login_screen)
         self._epd.display(self._epd.getbuffer(login_screen))
 
-    def _authorization(self) -> None:
-        """displays authorization screen"""
 
+class AuthorizationScreen(View):
+    """displays authorization screen"""
+
+    def display(self) -> None:
         logging.info("Display authorization screen")
 
         # init image
         auth_screen = Image.new("1", (self._epd.height, self._epd.width), 255)
         auth_screen_draw = ImageDraw.Draw(auth_screen)
 
-        if not self._associated_worker.is_authorized:
+        if not self._display.associated_worker.is_authorized:
             # display a message about failed authorization
 
             # draw the cross sign
@@ -142,7 +201,7 @@ class Display:
             sleep(3)
 
             # since authorization failed switch back to login screen
-            self.state = 0
+            self._display.render_view(LoginScreen)
             return
 
         else:
@@ -156,7 +215,9 @@ class Display:
             auth_screen.paste(tick_image, (20, floor((self._epd.width - img_h) / 2)))
 
             try:
-                message = f"Авторизован\n{self._associated_worker.position}\n{self._associated_worker.short_name()}"
+                worker_position: str = self._display.associated_worker.position
+                worker_short_name: str = self._display.associated_worker.short_name()
+                message = f"Авторизован\n{worker_position}\n{worker_short_name}"
 
                 # draw the message
                 auth_screen_draw.text((20 + img_w + 10, 30), message, font=self._font_s, fill=0)
@@ -173,17 +234,19 @@ class Display:
             sleep(3)
 
             # switch to barcode await screen
-            self.state = 2
-            return
+            self._display.render_view(AwaitInputScreen)
 
-    def _await_input(self) -> None:
-        # display barcode scan prompt
+
+class AwaitInputScreen(View):
+    """displays the barcode scan prompt"""
+
+    def display(self) -> None:
         logging.info(f"Display barcode scan prompt")
 
         image = Image.new("1", (self._epd.height, self._epd.width), 255)
         message = "Сканируйте\nштрихкод"
 
-        footer = f"Авторизован {self._associated_worker.short_name()}"
+        footer = f"Авторизован {self._display.associated_worker.short_name()}"
         logging.debug(f"Footer: {footer}")
 
         image_draw = ImageDraw.Draw(image)
@@ -209,8 +272,11 @@ class Display:
         self._save_image(image)
         self._epd.display(self._epd.getbuffer(image))
 
-    def _ongoing_operation(self) -> None:
-        # Display assembly timer
+
+class OngoingOperationScreen(View):
+    """Displays the assembly timer"""
+
+    def display(self) -> None:
         logging.info("Display assembly timer")
         time_image = Image.new("1", (self._epd.height, self._epd.width), 255)
         time_draw = ImageDraw.Draw(time_image)
@@ -224,7 +290,7 @@ class Display:
         time_draw.text((self._epd.width - w / 2, 67), message, font=self._font_s, fill=0, align="center")
         start_time = dt.now()
 
-        while self.state == 3:
+        while True:
             timer_delta = dt.now() - start_time
             timer = dt.utcfromtimestamp(timer_delta.total_seconds())
             message = timer.strftime("%H:%M:%S")
@@ -239,27 +305,13 @@ class Display:
             time_image.paste(new_image, (nw_w, 30))
             self._epd.DisplayPartial(self._epd.getbuffer(time_image))
 
-        self._save_image(time_image)
 
-    def _handle_state_change(self) -> None:
-        """handle state changing and change the output accordingly"""
+class BlankScreen(View):
+    """used to clear the screen before and after usage"""
 
-        self._display_busy = True  # raise the flag
-
-        while self.state != self._latest_known_state:
-            logging.info(f"Display state changed from {self._latest_known_state} to {self.state}")
-            self._latest_known_state = self.state
-
-            if self.state == 0:  # login screen
-                self._login_screen()
-            elif self.state == 1:  # authorization status and awaiting barcode event
-                self._authorization()
-            elif self.state == 2:  # authorized, await input
-                self._await_input()
-            elif self.state == 3:  # ongoing operation
-                self._ongoing_operation()
-            else:
-                logging.error(f"Wrong state: {self.state}. Exiting.")
-                exit()
-
-        self._display_busy = False  # remove the flag
+    def display(self) -> None:
+        logging.info("Clearing the screen")
+        self._epd.init()
+        self._epd.Clear(0x00)  # fill with black to remove stuck pixels
+        self._epd.Clear(0xFF)  # fill with white
+        logging.debug("Finished clearing the screen")

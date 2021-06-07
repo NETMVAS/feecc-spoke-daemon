@@ -5,7 +5,7 @@ import typing as tp
 from flask import Flask, request
 from flask_restful import Api, Resource
 
-from Display import Display
+from Display import Display, LoginScreen, AwaitInputScreen, OngoingOperationScreen, AuthorizationScreen
 from Spoke import Spoke
 from Worker import Worker
 
@@ -74,13 +74,13 @@ class HidEventHandler(Resource):
 
             if response_data["status"]:
                 # end ongoing operation if there is one
-                if display.state == 3:
+                if spoke.recording_in_progress:
                     # switch back to await screen
-                    display.change_state(2)
+                    display.render_view(AwaitInputScreen)
 
                 else:
                     # switch to ongoing operation screen since validation succeeded
-                    display.change_state(3)
+                    display.render_view(OngoingOperationScreen)
             else:
                 logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
@@ -93,7 +93,7 @@ class HidEventHandler(Resource):
         if worker.is_authorized:
             spoke.end_recording()
             worker.log_out()
-            display.change_state(0)
+            display.render_view(LoginScreen)
             return
 
         # perform development log in if set in config
@@ -116,7 +116,7 @@ class HidEventHandler(Resource):
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
-        display.change_state(1)
+        display.render_view(AuthorizationScreen)
 
 
 class ResetState(Resource):
@@ -124,7 +124,7 @@ class ResetState(Resource):
 
     @staticmethod
     def post() -> tp.Dict[str, tp.Any]:
-        display.change_state(0)
+        display.render_view(LoginScreen)
 
         message = {
             "status": 200,
@@ -140,7 +140,7 @@ api.add_resource(ResetState, "/api/reset_state")
 
 # entry point
 if __name__ == "__main__":
-    display.change_state(0)
+    display.render_view(LoginScreen)
     app.run(  # start the server
         host=spoke.config["api"]["server_ip"],
         port=spoke.config["api"]["server_port"]

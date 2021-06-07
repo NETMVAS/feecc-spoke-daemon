@@ -11,7 +11,7 @@ class Spoke:
 
     def __init__(self) -> None:
         self.config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._read_configuration()
-        self._recording_in_progress: bool = False
+        self.recording_in_progress: bool = False
         self._latest_barcode_payload: tp.Optional[tp.Any] = None
 
     def submit_barcode(self, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, tp.Any]:
@@ -26,10 +26,10 @@ class Spoke:
         )
 
         response_data: tp.Dict[str, tp.Any] = response.json()
-        self._recording_in_progress = not self._recording_in_progress  # invert the flag
+        self.recording_in_progress = not self.recording_in_progress  # invert the flag
 
         # save the payload if recording started
-        if self._recording_in_progress:
+        if self.recording_in_progress:
             self._latest_barcode_payload = payload
         else:
             self._latest_barcode_payload = None
@@ -110,6 +110,6 @@ class Spoke:
     def end_recording(self) -> None:
         """ends recording if there is any"""
 
-        if self._recording_in_progress:
+        if self.recording_in_progress:
             payload = self._latest_barcode_payload
             self.submit_barcode(payload)
