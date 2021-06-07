@@ -43,7 +43,7 @@ class Display:
         """
 
         self._state = new_state
-        self._state._display = self
+        self._state.context = self
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
@@ -65,9 +65,7 @@ class Display:
         self._display_busy = True  # raise the flag
 
         while self._state != self._latest_known_state:
-            logging.info(
-                f"View changed from {self._latest_known_state.__class__.__name__} to {self.state}"
-            )
+            logging.info(f"View changed from {self._latest_known_state.__class__.__name__} to {self.state}")
             self._latest_known_state = self._state
             self._state.display()
 

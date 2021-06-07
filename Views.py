@@ -7,6 +7,7 @@ from time import sleep
 
 from PIL import Image, ImageDraw, ImageFont
 
+import waveshare_epd.epd2in13d
 from Display import Display
 
 # a View is an image unit - one drawable medium,
@@ -22,12 +23,22 @@ class View(ABC):
 
     def __init__(self) -> None:
         self._display: tp.Optional[Display] = None
-        self._epd = self._display.epd
+        self._epd: tp.Optional[waveshare_epd.epd2in13d.EPD] = None
 
         # fonts
         self._font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
         self._font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self._font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
+
+    @property
+    def context(self):
+        return self._display
+
+    @context.setter
+    def context(self, context: Display) -> None:
+        self._display = context
+        self._epd = self._display.epd
+        logging.debug(f"View context set as {context}")
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
