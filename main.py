@@ -28,7 +28,6 @@ def end_session() -> None:
     """clear the display, release SPI and join the thread before exiting"""
 
     display.end_session()
-    display.display_thread.join(timeout=1)
 
 
 class HidEventHandler(Resource):
