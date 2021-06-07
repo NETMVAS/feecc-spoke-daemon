@@ -70,7 +70,7 @@ class Display:
 
         while self._state != self._latest_known_state:
             logging.info(
-                f"View changed from {self._latest_known_state.__class__.__name__} to {self._state.__class__.__name__}"
+                f"View changed from {self._latest_known_state.__class__.__name__} to {self.state}"
             )
             self._latest_known_state = self._state
             self._state.display()
@@ -95,7 +95,7 @@ class Display:
 
     @property
     def state(self):
-        return self._state
+        return self._state.__class__.__name__
 
 
 class View(ABC):
