@@ -68,17 +68,10 @@ class HidEventHandler(Resource):
         }
 
         try:
-            if not spoke.config["developer"]["disable_barcode_validation"]:
-                response_data = spoke.submit_barcode(payload)
-                spoke.recording_in_progress = not spoke.recording_in_progress
-
-                if spoke.recording_in_progress:
-                    spoke.latest_barcode_payload = payload
-                else:
-                    spoke.latest_barcode_payload = None
-
-            else:
+            if spoke.config["developer"]["disable_barcode_validation"]:  # skip barcode validation
                 response_data = {"status": True}
+            else:
+                response_data = spoke.submit_barcode(payload)  # perform barcode validation otherwise
 
             if response_data["status"]:
                 # end ongoing operation if there is one
@@ -99,10 +92,7 @@ class HidEventHandler(Resource):
     def handle_rfid_event(event_dict: tp.Dict[str, tp.Any]) -> None:
         # if worker is logged in - log him out
         if worker.is_authorized:
-            # if there is an ongoing operation - end it
-            if spoke.recording_in_progress:
-                spoke.end_recording()
-
+            spoke.end_recording()
             worker.log_out()
             display.change_state(0)
             return
@@ -110,9 +100,7 @@ class HidEventHandler(Resource):
         # perform development log in if set in config
         if spoke.config["developer"]["disable_id_validation"]:
             logging.info("Worker authorized regardless of the ID card: development auth is on.")
-            worker.full_name = "Иванов Иван Иванович"
-            worker.position = "Младший инженер"
-            worker.log_in()
+            worker.log_in("Младший инженер", "Иванов Иван Иванович")
 
         else:
             # make a call to authorize the worker otherwise
@@ -122,9 +110,7 @@ class HidEventHandler(Resource):
 
                 # check if worker authorized and log him in
                 if response_data["is_valid"]:
-                    worker.full_name = response_data["employee_name"]
-                    worker.position = response_data["position"]
-                    worker.log_in()
+                    worker.log_in(response_data["position"], response_data["employee_name"])
                 else:
                     logging.error("Worker could not be authorized: hub rejected ID card")
 

@@ -7,22 +7,24 @@ class Worker:
     """stores data about the worker"""
 
     is_authorized: bool = False
-    full_name: str = "Иванов Иван Иванович"
-    position: str = "Младший инженер"
+    full_name: str = ""
+    position: str = ""
 
-    def log_in(self) -> None:
+    def log_in(self, position: str, full_name: str) -> None:
         """end working session and log out the worker"""
 
-        logging.info(f"{self.position} {self.short_name()} logged in")
+        self.full_name = full_name
+        self.position = position
         self.is_authorized = True
+        logging.info(f"{self.position} {self.short_name()} logged in")
 
     def log_out(self) -> None:
         """end working session and log out the worker"""
 
-        logging.info(f"{self.position} {self.short_name()} logged out")
         self.full_name = ""
         self.position = ""
         self.is_authorized = False
+        logging.info(f"{self.position} {self.short_name()} logged out")
 
     def short_name(self) -> str:
         """
