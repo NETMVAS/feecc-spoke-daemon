@@ -7,7 +7,7 @@ from flask_restful import Api, Resource
 
 from Display import Display
 from Spoke import Spoke
-from Views import LoginScreen, AwaitInputScreen, OngoingOperationScreen, AuthorizationScreen
+from Views import LoginScreen, AwaitInputScreen, OngoingOperationScreen, FailedAuthorization, SuccessfulAuthorization
 from Worker import Worker
 
 # set up logging
@@ -117,7 +117,10 @@ class HidEventHandler(Resource):
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
-        display.render_view(AuthorizationScreen)
+        if worker.is_authorized:
+            display.render_view(SuccessfulAuthorization)
+        else:
+            display.render_view(FailedAuthorization)
 
 
 class ResetState(Resource):

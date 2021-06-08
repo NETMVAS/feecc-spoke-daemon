@@ -22,7 +22,6 @@ class Display:
 
     def __init__(self, associated_worker: Worker, associated_spoke: Spoke) -> None:
         self._state: tp.Optional[View] = None  # a View type of object which is responsible for the state
-        self._latest_known_state: tp.Optional[View] = None
         self._associated_worker: Worker = associated_worker
         self._associated_spoke: Spoke = associated_spoke
         self._spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._associated_spoke.config
@@ -63,12 +62,8 @@ class Display:
         """handle state changing and change the output accordingly"""
 
         self._display_busy = True  # raise the flag
-
-        while self._state != self._latest_known_state:
-            logging.info(f"View changed from {self._latest_known_state.__class__.__name__} to {self.state}")
-            self._latest_known_state = self._state
-            self._state.display()
-
+        logging.info(f"View changed to {self.state}")
+        self._state.display()
         self._display_busy = False  # remove the flag
 
     @property
