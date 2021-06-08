@@ -22,10 +22,10 @@ class Display:
 
     def __init__(self, associated_worker: Worker, associated_spoke: Spoke) -> None:
         self._state: tp.Optional[View] = None  # a View type of object which is responsible for the state
-        self._associated_worker: Worker = associated_worker
-        self._associated_spoke: Spoke = associated_spoke
-        self._spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._associated_spoke.config
-        self._epd = epd2in13d.EPD()
+        self.associated_worker: Worker = associated_worker
+        self.associated_spoke: Spoke = associated_spoke
+        self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
+        self.epd = epd2in13d.EPD()
 
         # thread for the display to run in
         self._display_thread: tp.Optional[threading.Thread] = None
@@ -65,22 +65,6 @@ class Display:
         logging.info(f"View changed to {self.state}")
         self._state.display()
         self._display_busy = False  # remove the flag
-
-    @property
-    def spoke_config(self) -> tp.Dict[str, tp.Dict[str, tp.Any]]:
-        return self._spoke_config
-
-    @property
-    def associated_spoke(self) -> Spoke:
-        return self._associated_spoke
-
-    @property
-    def epd(self) -> epd2in13d.EPD:
-        return self._epd
-
-    @property
-    def associated_worker(self) -> Worker:
-        return self._associated_worker
 
     @property
     def state(self) -> str:

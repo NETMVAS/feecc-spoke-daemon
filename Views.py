@@ -112,7 +112,7 @@ class LoginScreen(View):
         self._render_image(login_screen)
 
 
-class FailedAuthorization(View):
+class FailedAuthorizationScreen(View):
     """display a message about failed authorization"""
 
     def display(self) -> None:
@@ -144,7 +144,7 @@ class FailedAuthorization(View):
         self.context.render_view(LoginScreen)
 
 
-class SuccessfulAuthorization(View):
+class SuccessfulAuthorizationScreen(View):
     """display a message about successful authorization"""
 
     def display(self) -> None:
