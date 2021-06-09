@@ -43,9 +43,11 @@ class Display:
 
         self._state = new_state()
         self._state.context = self
+        logging.info(f"Display: rendering view {self.state}")
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
+            logging.debug(f"Display busy. Waiting to draw {self.state}")
             sleep(0.5)
 
         self._display_thread = threading.Thread(target=self._handle_state_change)
