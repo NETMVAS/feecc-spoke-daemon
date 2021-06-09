@@ -8,7 +8,6 @@ from time import sleep
 from PIL import Image, ImageDraw, ImageFont
 
 import waveshare_epd.epd2in13d
-from Display import Display
 
 
 # a View is an image unit - one drawable medium,
@@ -24,7 +23,7 @@ class View(ABC):
 
     def __init__(self) -> None:
         # associated display parameters
-        self._display: tp.Optional[Display] = None
+        self._display = None
         self._epd: tp.Optional[waveshare_epd.epd2in13d.EPD] = None
         self._height: int = 0
         self._width: int = 0
@@ -39,7 +38,7 @@ class View(ABC):
         return self._display
 
     @context.setter
-    def context(self, context: tp.Optional[Display]) -> None:
+    def context(self, context) -> None:
         self._display = context
         self._epd = self._display.epd
         self._height = self._epd.height
