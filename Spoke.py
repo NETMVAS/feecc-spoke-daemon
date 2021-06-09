@@ -26,7 +26,6 @@ class Spoke:
         )
 
         response_data: tp.Dict[str, tp.Any] = response.json()
-        self.invert_rec_flag()
 
         # save the payload if recording started
         if self.recording_in_progress:

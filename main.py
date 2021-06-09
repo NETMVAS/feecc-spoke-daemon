@@ -71,7 +71,6 @@ class HidEventHandler(Resource):
         try:
             if spoke.config["developer"]["disable_barcode_validation"]:  # skip barcode validation
                 response_data = {"status": True}
-                spoke.invert_rec_flag()
             else:
                 response_data = spoke.submit_barcode(payload)  # perform barcode validation otherwise
 
@@ -86,6 +85,8 @@ class HidEventHandler(Resource):
                     # switch to ongoing operation screen since validation succeeded
                     logging.debug("Starting recording.")
                     display.render_view(Views.OngoingOperationScreen)
+
+                spoke.invert_rec_flag()
             else:
                 logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
