@@ -236,7 +236,7 @@ class OngoingOperationScreen(View):
         time_draw.text((self._width - w / 2, 67), message, font=self._font_s, fill=0, align="center")
         start_time = dt.now()
 
-        while True:
+        while self.name == self.context.state:
             timer_delta = dt.now() - start_time
             timer = dt.utcfromtimestamp(timer_delta.total_seconds())
             message = timer.strftime("%H:%M:%S")
