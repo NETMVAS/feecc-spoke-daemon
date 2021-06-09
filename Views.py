@@ -75,6 +75,9 @@ class View(ABC):
 class LoginScreen(View):
     """displays login screen"""
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def display(self) -> None:
         logging.info("Display login screen")
 
@@ -114,6 +117,9 @@ class LoginScreen(View):
 class FailedAuthorizationScreen(View):
     """display a message about failed authorization"""
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def display(self) -> None:
         # init image
         auth_screen = Image.new("1", (self._height, self._width), 255)
@@ -145,6 +151,9 @@ class FailedAuthorizationScreen(View):
 
 class SuccessfulAuthorizationScreen(View):
     """display a message about successful authorization"""
+
+    def __init__(self) -> None:
+        super().__init__()
 
     def display(self) -> None:
         # init image
@@ -182,6 +191,9 @@ class SuccessfulAuthorizationScreen(View):
 class AwaitInputScreen(View):
     """displays the barcode scan prompt"""
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def display(self) -> None:
         logging.info(f"Display barcode scan prompt")
 
@@ -216,6 +228,9 @@ class AwaitInputScreen(View):
 class OngoingOperationScreen(View):
     """Displays the assembly timer"""
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def display(self) -> None:
         logging.info("Display assembly timer")
         time_image = Image.new("1", (self._height, self._width), 255)
@@ -248,6 +263,9 @@ class OngoingOperationScreen(View):
 
 class BlankScreen(View):
     """used to clear the screen before and after usage"""
+
+    def __init__(self) -> None:
+        super().__init__()
 
     def display(self) -> None:
         logging.info("Clearing the screen")
