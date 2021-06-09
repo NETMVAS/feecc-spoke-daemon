@@ -41,7 +41,7 @@ class Display:
         :return:
         """
 
-        self._state = new_state
+        self._state = new_state()
         self._state.context = self
 
         # wait for the ongoing operation to finish to avoid overwhelming the display

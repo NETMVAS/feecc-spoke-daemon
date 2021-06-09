@@ -77,11 +77,11 @@ class HidEventHandler(Resource):
                 # end ongoing operation if there is one
                 if spoke.recording_in_progress:
                     # switch back to await screen
-                    display.render_view(Views.AwaitInputScreen())
+                    display.render_view(Views.AwaitInputScreen)
 
                 else:
                     # switch to ongoing operation screen since validation succeeded
-                    display.render_view(Views.OngoingOperationScreen())
+                    display.render_view(Views.OngoingOperationScreen)
             else:
                 logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
@@ -94,7 +94,7 @@ class HidEventHandler(Resource):
         if worker.is_authorized:
             spoke.end_recording()
             worker.log_out()
-            display.render_view(Views.LoginScreen())
+            display.render_view(Views.LoginScreen)
             return
 
         # perform development log in if set in config
@@ -118,9 +118,9 @@ class HidEventHandler(Resource):
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
         if worker.is_authorized:
-            display.render_view(Views.SuccessfulAuthorizationScreen())
+            display.render_view(Views.SuccessfulAuthorizationScreen)
         else:
-            display.render_view(Views.FailedAuthorizationScreen())
+            display.render_view(Views.FailedAuthorizationScreen)
 
 
 class ResetState(Resource):
@@ -128,7 +128,7 @@ class ResetState(Resource):
 
     @staticmethod
     def post() -> tp.Dict[str, tp.Any]:
-        display.render_view(Views.LoginScreen())
+        display.render_view(Views.LoginScreen)
 
         message = {
             "status": 200,
@@ -144,7 +144,7 @@ api.add_resource(ResetState, "/api/reset_state")
 
 # entry point
 if __name__ == "__main__":
-    display.render_view(Views.LoginScreen())
+    display.render_view(Views.LoginScreen)
     app.run(  # start the server
         host=spoke.config["api"]["server_ip"],
         port=spoke.config["api"]["server_port"]
