@@ -41,12 +41,18 @@ class Display:
         :return:
         """
 
+        previous_state: str = self.state
         self._state = new_state()
         self._state.context = self
         logging.info(f"Display: rendering view {self.state}")
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
+            # drop pending View if it is the same one
+            if self.state == previous_state:
+                logging.info(f"Pending View ({self.state}) matches the current View. View render dropped.")
+                return
+
             logging.debug(f"Display busy. Waiting to draw {self.state}")
             sleep(0.5)
 

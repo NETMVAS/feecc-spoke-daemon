@@ -179,6 +179,37 @@ class SuccessfulAuthorizationScreen(View):
         self._render_image(auth_screen)
 
 
+class AuthorizeFirstScreen(View):
+    """display a message about authorization needed to scan barcode"""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def display(self) -> None:
+        # init image
+        auth_warning_screen = Image.new("1", (self._height, self._width), 255)
+        auth_warning_screen_draw = ImageDraw.Draw(auth_warning_screen)
+
+        # draw the cross sign
+        cross_image = Image.open("img/cross.png")
+        img_h, img_w = (50, 50)
+        cross_image = cross_image.resize((img_h, img_w))
+        auth_warning_screen.paste(cross_image, (20, floor((self._width - img_h) / 2)))
+
+        # draw the message
+        message = "Необходима\nавторизация"
+        txt_h, txt_w = auth_warning_screen_draw.textsize(message, self._font_m)
+        auth_warning_screen_draw.text(
+            (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15),
+            message,
+            font=self._font_m,
+            fill=0
+        )
+
+        # display the image
+        self._render_image(auth_warning_screen)
+
+
 class AwaitInputScreen(View):
     """displays the barcode scan prompt"""
 

@@ -55,6 +55,9 @@ class HidEventHandler(Resource):
         # ignore the event if unauthorized
         if not worker.is_authorized:
             logging.info(f"Ignoring barcode event: worker not authorized.")
+            display.render_view(Views.AuthorizeFirstScreen)
+            sleep(3)
+            display.render_view(Views.LoginScreen)
             return
 
         # make a request to the hub regarding the barcode
