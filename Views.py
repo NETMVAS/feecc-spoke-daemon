@@ -3,7 +3,6 @@ import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from math import floor
-from time import sleep
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -143,10 +142,6 @@ class FailedAuthorizationScreen(View):
 
         # display the image
         self._render_image(auth_screen)
-        sleep(3)
-
-        # since authorization failed switch back to login screen
-        self.context.render_view(LoginScreen)
 
 
 class SuccessfulAuthorizationScreen(View):
@@ -182,10 +177,6 @@ class SuccessfulAuthorizationScreen(View):
 
         # display the image
         self._render_image(auth_screen)
-        sleep(3)
-
-        # switch to barcode await screen
-        self.context.render_view(AwaitInputScreen)
 
 
 class AwaitInputScreen(View):

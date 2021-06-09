@@ -1,6 +1,7 @@
 import atexit
 import logging
 import typing as tp
+from time import sleep
 
 from flask import Flask, request
 from flask_restful import Api, Resource
@@ -119,8 +120,12 @@ class HidEventHandler(Resource):
 
         if worker.is_authorized:
             display.render_view(Views.SuccessfulAuthorizationScreen)
+            sleep(3)
+            display.render_view(Views.AwaitInputScreen)
         else:
             display.render_view(Views.FailedAuthorizationScreen)
+            sleep(3)
+            display.render_view(Views.LoginScreen)
 
 
 class ResetState(Resource):
