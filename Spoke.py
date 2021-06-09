@@ -113,5 +113,8 @@ class Spoke:
         """ends recording if there is any"""
 
         if self.recording_in_progress:
-            payload = self._latest_barcode_payload
-            self.submit_barcode(payload)
+            if not self.config["developer"]["disable_barcode_validation"]:
+                payload = self._latest_barcode_payload
+                self.submit_barcode(payload)
+
+            self.invert_rec_flag()
