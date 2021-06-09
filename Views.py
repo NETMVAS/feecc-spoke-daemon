@@ -49,7 +49,7 @@ class View(ABC):
         """saves image if specified in the config"""
 
         if self._display.spoke_config["developer"]["render_images"]:
-            image_name = f"img/state-{self.name}-{str(dt.now()).split('.')[0]}.png"
+            image_name = f"img/{self.name}-{str(dt.now()).split('.')[0]}.png"
             image.save(image_name)
             logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
 

@@ -15,4 +15,4 @@ known_hid_devices: # known attached devices with their full names
 developer: # do not change when used in production, testing only
   disable_id_validation: true # skip validating the ID card and authorize anyone regardless of the ID card no.
   disable_barcode_validation: true # skip validating the barcode
-  render_images: true # save rendered screens locally instead of drawing them onto an e-ink display
+  render_images: false # save rendered screens locally instead of drawing them onto an e-ink display
