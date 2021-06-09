@@ -39,7 +39,7 @@ class View(ABC):
         return self._display
 
     @context.setter
-    def context(self, context: Display) -> None:
+    def context(self, context: tp.Optional[Display]) -> None:
         self._display = context
         self._epd = self._display.epd
         self._height = self._epd.height
