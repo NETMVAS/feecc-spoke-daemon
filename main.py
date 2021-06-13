@@ -142,10 +142,7 @@ class ResetState(Resource):
     def post() -> tp.Dict[str, tp.Any]:
         display.render_view(Views.LoginScreen)
 
-        message = {
-            "status": 200,
-            "message": "Successful state transition back to 0"
-        }
+        message = {"status": 200, "message": "Successful state transition back to 0"}
 
         return message
 

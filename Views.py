@@ -275,9 +275,7 @@ class OngoingOperationScreen(View):
             w, h = time_draw.textsize(message, self._font_l)
             nw_w = floor(self._width - w / 2)
             time_draw.rectangle((nw_w, 30, nw_w + w, 30 + h), fill=255)
-            time_draw.text(
-                (nw_w, 30), message, font=self._font_l, fill=0
-            )
+            time_draw.text((nw_w, 30), message, font=self._font_l, fill=0)
             new_image = time_image.crop([nw_w, 30, nw_w + w, 30 + h])
             time_image.paste(new_image, (nw_w, 30))
             self._epd.DisplayPartial(self._epd.getbuffer(time_image))
