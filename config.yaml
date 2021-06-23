@@ -1,5 +1,6 @@
 general: # miscellaneous parameters
-  spoke_num: 1 # device number
+  workbench_no: 1 # associated workbench number
+  production_stage_name: "Final assembly"
 
 endpoints:
   hub_socket: "http://192.168.1.2:5000" # hub api socket on the LAN

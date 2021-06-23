@@ -5,7 +5,7 @@ from time import sleep
 
 from Spoke import Spoke
 from Views import BlankScreen, View
-from Worker import Worker
+from Employee import Employee
 from waveshare_epd import epd2in13d
 
 # Set output log level
@@ -20,9 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 class Display:
     """the context class"""
 
-    def __init__(self, associated_worker: Worker, associated_spoke: Spoke) -> None:
+    def __init__(self, associated_worker: Employee, associated_spoke: Spoke) -> None:
         self._state: tp.Optional[View] = None  # a View type of object which is responsible for the state
-        self.associated_worker: Worker = associated_worker
+        self.associated_worker: Employee = associated_worker
         self.associated_spoke: Spoke = associated_spoke
         self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
         self.epd = epd2in13d.EPD()

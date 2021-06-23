@@ -3,7 +3,7 @@ import logging
 
 
 @dataclass
-class Worker:
+class Employee:
     """stores data about the worker"""
 
     is_authorized: bool = False

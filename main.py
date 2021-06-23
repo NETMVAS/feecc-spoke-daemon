@@ -3,13 +3,14 @@ import logging
 import typing as tp
 from time import sleep
 
+import requests
 from flask import Flask, request
 from flask_restful import Api, Resource
 
 import Views
 from Display import Display
 from Spoke import Spoke
-from Worker import Worker
+from Employee import Employee
 
 # set up logging
 logging.basicConfig(
@@ -19,7 +20,7 @@ logging.basicConfig(
 )
 
 spoke = Spoke()  # initialize Spoke object
-worker = Worker()  # create Worker object
+worker = Employee()  # create Employee object
 display: Display = Display(worker, spoke)  # instantiate Display
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
@@ -64,18 +65,32 @@ class HidEventHandler(Resource):
         barcode_string = event_dict["string"]
         logging.info(f"Making a request to hub regarding the barcode {barcode_string}")
 
-        payload = {
-            "barcode_string": barcode_string,
-            "employee_name": worker.full_name,
-            "position": worker.position,
-            "spoke_num": spoke.config["general"]["spoke_num"]
-        }
-
         try:
             if spoke.config["developer"]["disable_barcode_validation"]:  # skip barcode validation
                 response_data = {"status": True}
+
             else:
-                response_data = spoke.submit_barcode(payload)  # perform barcode validation otherwise
+                if spoke.recording_in_progress:
+                    url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
+                    payload = {
+                        "workbench_no": spoke.number,
+                        "production_stage_name": spoke.config["general"]["production_stage_name"],
+                        "additional_info": {}
+                    }
+
+                    spoke.associated_unit_internal_id = barcode_string
+
+                else:
+                    url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
+                    payload = {
+                        "workbench_no": spoke.number,
+                        "additional_info": {}
+                    }
+
+                    spoke.associated_unit_internal_id = ""
+
+                response = requests.post(url=url, json=payload)
+                response_data = response.json()
 
             if response_data["status"]:
                 # end ongoing operation if there is one
@@ -102,25 +117,37 @@ class HidEventHandler(Resource):
         if worker.is_authorized:
             spoke.end_recording()
             worker.log_out()
+
+            payload = {"workbench_no": spoke.number}
+            url = f"{spoke.hub_url}/api/employee/log-out"
+            requests.post(url=url, json=payload)
+
             display.render_view(Views.LoginScreen)
             return
 
         # perform development log in if set in config
         if spoke.config["developer"]["disable_id_validation"]:
-            logging.info("Worker authorized regardless of the ID card: development auth is on.")
+            logging.info("Employee authorized regardless of the ID card: development auth is on.")
             worker.log_in("Младший инженер", "Иванов Иван Иванович")
 
         else:
             # make a call to authorize the worker otherwise
             try:
-                payload = {"rfid_string": event_dict["string"]}
-                response_data = spoke.submit_rfid(payload)
+                payload = {
+                    "workbench_no": spoke.number,
+                    "employee_rfid_card_no": event_dict["string"]
+                }
+                url = f"{spoke.hub_url}/api/employee/log-in"
+                response = requests.post(url=url, json=payload)
+                response_data = response.json()
 
                 # check if worker authorized and log him in
-                if response_data["is_valid"]:
-                    worker.log_in(response_data["position"], response_data["employee_name"])
+                if response_data["status"]:
+                    name = response_data["employee_data"]["name"]
+                    position = response_data["employee_data"]["position"]
+                    worker.log_in(position, name)
                 else:
-                    logging.error("Worker could not be authorized: hub rejected ID card")
+                    logging.error("Employee could not be authorized: hub rejected ID card")
 
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")

@@ -1,9 +1,10 @@
-import typing as tp
-import sys
-import yaml
 import logging
 import subprocess
+import sys
+import typing as tp
+
 import requests
+import yaml
 
 
 class Spoke:
@@ -12,47 +13,18 @@ class Spoke:
     def __init__(self) -> None:
         self.config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._read_configuration()
         self.recording_in_progress: bool = False
-        self._latest_barcode_payload: tp.Optional[tp.Any] = None
+        self.associated_unit_internal_id: str = ""
 
-    def submit_barcode(self, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, tp.Any]:
-        """
-        submit barcode event to the hub by sending an API call
-        :param payload: dict to send in the request
-        :return: response dict from the API
-        """
-        response = requests.post(
-            url=f'{self.config["endpoints"]["hub_socket"]}/api/passport',
-            json=payload
-        )
+    @property
+    def number(self) -> int:
+        return self.config["general"]["workbench_no"]
 
-        response_data: tp.Dict[str, tp.Any] = response.json()
-
-        # save the payload if recording started
-        if self.recording_in_progress:
-            self._latest_barcode_payload = payload
-        else:
-            self._latest_barcode_payload = None
-
-        return response_data
-
-    def submit_rfid(self, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, str]:
-        """
-        submit RFID event to the hub by sending an API call
-        :param payload: dict to send in the request
-        :return: response dict from the API
-        """
-
-        response = requests.post(
-            url=f'{self.config["endpoints"]["hub_socket"]}/api/validator',
-            json=payload
-        )
-
-        response_data: tp.Dict[str, str] = response.json()
-
-        return response_data
+    @property
+    def hub_url(self) -> str:
+        return self.config["endpoints"]["hub_socket"]
 
     def invert_rec_flag(self) -> None:
-        self.recording_in_progress = not self.recording_in_progress  # invert the flag
+        self.recording_in_progress = not self.recording_in_progress
 
     @staticmethod
     def ipv4() -> str:
@@ -114,7 +86,12 @@ class Spoke:
 
         if self.recording_in_progress:
             if not self.config["developer"]["disable_barcode_validation"]:
-                payload = self._latest_barcode_payload
-                self.submit_barcode(payload)
+                url = f"{self.hub_url}/api/unit/{self.associated_unit_internal_id}/end"
+                payload = {
+                    "workbench_no": self.number,
+                    "additional_info": {}
+                }
+
+                requests.post(url=url, json=payload)
 
             self.invert_rec_flag()
