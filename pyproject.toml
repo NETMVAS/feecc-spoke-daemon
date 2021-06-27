@@ -17,6 +17,7 @@ Pillow-PIL = "^0.1dev"
 mypy = "^0.812"
 black = "^21.6b0"
 pylint = "^2.8.3"
+vulture = "^2.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
