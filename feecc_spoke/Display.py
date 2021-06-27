@@ -60,7 +60,7 @@ class Display:
         """clear the screen if execution is interrupted or script exits"""
 
         self.render_view(BlankScreen)
-        epd2in13d.epdconfig.module_exit()  # type: ignore
+        feecc_spoke.waveshare_epd.epdconfig.module_exit()  # type: ignore
 
         if self._display_thread:
             self._display_thread.join(timeout=1)

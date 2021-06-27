@@ -8,10 +8,10 @@ import requests
 from flask import Flask, request, Response
 from flask_restful import Api, Resource
 
-import Views
-from Display import Display
-from Employee import Employee
-from Spoke import Spoke
+from feecc_spoke import Views
+from feecc_spoke.Display import Display
+from feecc_spoke.Employee import Employee
+from feecc_spoke.Spoke import Spoke
 
 # set up logging
 logging.basicConfig(

@@ -5,7 +5,7 @@ import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from math import floor
-
+import os
 from PIL import Image, ImageDraw, ImageFont
 
 import waveshare_epd.epd2in13d
@@ -34,14 +34,18 @@ class View(ABC):
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
-        self._font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
-        self._font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
-        self._font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
+        font_path = "fonts/helvetica-cyrillic-bold.ttf"
+        self._font_s = ImageFont.truetype(font_path, 11)
+        self._font_m = ImageFont.truetype(font_path, 20)
+        self._font_l = ImageFont.truetype(font_path, 36)
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
 
         if self._display.spoke_config["developer"]["render_images"]:
+            if not os.path.isdir("img"):
+                os.mkdir("img")
+
             image_name = f"img/{self.name}-{str(dt.now()).split('.')[0]}.png"
             image.save(image_name)
             logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
