@@ -1,16 +1,17 @@
 import atexit
+import json
 import logging
 import typing as tp
 from time import sleep
 
 import requests
-from flask import Flask, request
+from flask import Flask, request, Response
 from flask_restful import Api, Resource
 
 import Views
 from Display import Display
-from Spoke import Spoke
 from Employee import Employee
+from Spoke import Spoke
 
 # set up logging
 logging.basicConfig(
@@ -38,7 +39,7 @@ class HidEventHandler(Resource):
 
     def post(self) -> None:
         # parse the event dict JSON
-        event_dict: tp.Dict[str, tp.Any] = request.get_json()
+        event_dict: tp.Dict[str, tp.Any] = request.get_json()  # type: ignore
         logging.debug(f"Received event dict:\n{event_dict}")
 
         # handle the event in accord with it's source
@@ -49,7 +50,8 @@ class HidEventHandler(Resource):
         elif sender == "barcode_reader":
             self._handle_barcode_event(event_dict)
         else:
-            logging.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
+            logging.error(
+                "Sender of the event dict is not mentioned in the config. Can't handle the request.")
 
     @staticmethod
     def _handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
@@ -106,7 +108,8 @@ class HidEventHandler(Resource):
 
                 spoke.invert_rec_flag()
             else:
-                logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
+                logging.error(
+                    f"Barcode validation failed: hub returned '{response_data['comment']}'")
 
         except Exception as E:
             logging.error(f"Request to the hub failed:\n{E}")
@@ -166,12 +169,11 @@ class ResetState(Resource):
     """resets Spoke state back to 0 in case of a corresponding POST request"""
 
     @staticmethod
-    def post() -> tp.Dict[str, tp.Any]:
+    def post() -> Response:
         display.render_view(Views.LoginScreen)
-
-        message = {"status": 200, "message": "Successful state transition back to 0"}
-
-        return message
+        message = {"message": "Successful state transition back to 0"}
+        payload = json.dumps(message)
+        return Response(response=payload, status=200)
 
 
 # REST API endpoints

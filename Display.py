@@ -3,9 +3,9 @@ import threading
 import typing as tp
 from time import sleep
 
+from Employee import Employee
 from Spoke import Spoke
 from Views import BlankScreen, View
-from Employee import Employee
 from waveshare_epd import epd2in13d
 
 # Set output log level
@@ -21,11 +21,11 @@ class Display:
     """the context class"""
 
     def __init__(self, associated_worker: Employee, associated_spoke: Spoke) -> None:
-        self._state: tp.Optional[View] = None  # a View type of object which is responsible for the state
+        self._state: tp.Optional[View] = None
         self.associated_worker: Employee = associated_worker
         self.associated_spoke: Spoke = associated_spoke
         self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
-        self.epd = epd2in13d.EPD()
+        self.epd: epd2in13d.EPD = epd2in13d.EPD()
 
         # thread for the display to run in
         self._display_thread: tp.Optional[threading.Thread] = None
@@ -34,23 +34,19 @@ class Display:
         # clear the screen at the first start in case it has leftover images on it
         self.render_view(BlankScreen)
 
-    def render_view(self, new_state) -> None:
-        """
-        handle display state change in a separate thread
-        :param new_state: object of type View to be displayed
-        :return:
-        """
+    def render_view(self, new_state: tp.Type[View]) -> None:
+        """handle display state change in a separate thread"""
 
         previous_state: str = self.state
-        self._state = new_state()
-        self._state.context = self
+        self._state = new_state(self)
         logging.info(f"Display: rendering view {self.state}")
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         while self._display_busy:
             # drop pending View if it is the same one
             if self.state == previous_state:
-                logging.info(f"Pending View ({self.state}) matches the current View. View render dropped.")
+                logging.info(
+                    f"Pending View ({self.state}) matches the current View. View render dropped.")
                 return
 
             logging.debug(f"Display busy. Waiting to draw {self.state}")
@@ -63,15 +59,20 @@ class Display:
         """clear the screen if execution is interrupted or script exits"""
 
         self.render_view(BlankScreen)
-        epd2in13d.epdconfig.module_exit()
-        self._display_thread.join(timeout=1)
+        epd2in13d.epdconfig.module_exit()  # type: ignore
+
+        if self._display_thread:
+            self._display_thread.join(timeout=1)
 
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
 
         self._display_busy = True  # raise the flag
         logging.info(f"View changed to {self.state}")
-        self._state.display()
+
+        if self._state:
+            self._state.display()
+
         self._display_busy = False  # remove the flag
 
     @property

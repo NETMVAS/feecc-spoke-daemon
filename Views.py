@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import typing as tp
 from abc import ABC, abstractmethod
@@ -7,6 +9,9 @@ from math import floor
 from PIL import Image, ImageDraw, ImageFont
 
 import waveshare_epd.epd2in13d
+
+if tp.TYPE_CHECKING:
+    from Display import Display
 
 
 # a View is an image unit - one drawable medium,
@@ -20,30 +25,18 @@ class View(ABC):
     each view is responsible for an image drawn on the screen
     """
 
-    def __init__(self) -> None:
+    def __init__(self, context: Display) -> None:
         # associated display parameters
-        self._display = None
-        self._epd: tp.Optional[waveshare_epd.epd2in13d.EPD] = None
-        self._height: int = 0
-        self._width: int = 0
+        self._display: Display = context
+        self._epd: waveshare_epd.epd2in13d.EPD = self._display.epd
+        self._height: int = self._epd.height
+        self._width: int = self._epd.width
+        logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
         self._font_s = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 11)
         self._font_m = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 20)
         self._font_l = ImageFont.truetype("helvetica-cyrillic-bold.ttf", 36)
-
-    @property
-    def context(self):
-        return self._display
-
-    @context.setter
-    def context(self, context) -> None:
-        self._display = context
-        self._epd = self._display.epd
-        self._height = self._epd.height
-        self._width = self._epd.width
-
-        logging.debug(f"{self.name} context set as {self.context}")
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
@@ -73,9 +66,6 @@ class View(ABC):
 
 class LoginScreen(View):
     """displays login screen"""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def display(self) -> None:
         logging.info("Display login screen")
@@ -107,7 +97,8 @@ class LoginScreen(View):
             footer += f". IPv4: {ipv4}"
 
         w, h = login_screen_draw.textsize(footer, self._font_s)
-        login_screen_draw.text((self._width - w / 2, block_start + 50 + 3), footer, font=self._font_s, fill=0)
+        login_screen_draw.text((self._width - w / 2, block_start + 50 + 3), footer,
+                               font=self._font_s, fill=0)
 
         # display the image
         self._render_image(login_screen)
@@ -115,9 +106,6 @@ class LoginScreen(View):
 
 class FailedAuthorizationScreen(View):
     """display a message about failed authorization"""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def display(self) -> None:
         # init image
@@ -146,9 +134,6 @@ class FailedAuthorizationScreen(View):
 
 class SuccessfulAuthorizationScreen(View):
     """display a message about successful authorization"""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def display(self) -> None:
         # init image
@@ -182,9 +167,6 @@ class SuccessfulAuthorizationScreen(View):
 class AuthorizeFirstScreen(View):
     """display a message about authorization needed to scan barcode"""
 
-    def __init__(self) -> None:
-        super().__init__()
-
     def display(self) -> None:
         # init image
         auth_warning_screen = Image.new("1", (self._height, self._width), 255)
@@ -213,9 +195,6 @@ class AuthorizeFirstScreen(View):
 class AwaitInputScreen(View):
     """displays the barcode scan prompt"""
 
-    def __init__(self) -> None:
-        super().__init__()
-
     def display(self) -> None:
         logging.info(f"Display barcode scan prompt")
 
@@ -241,7 +220,8 @@ class AwaitInputScreen(View):
         # draw the footer
         logging.debug(f"Drawing the footer")
         footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
-        image_draw.text((floor((self._width - footer_w) / 2), 10 + img_h + 10), footer, font=self._font_s, fill=0)
+        image_draw.text((floor((self._width - footer_w) / 2), 10 + img_h + 10), footer,
+                        font=self._font_s, fill=0)
 
         # draw the image
         self._render_image(image)
@@ -249,9 +229,6 @@ class AwaitInputScreen(View):
 
 class OngoingOperationScreen(View):
     """Displays the assembly timer"""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def display(self) -> None:
         logging.info("Display assembly timer")
@@ -264,10 +241,11 @@ class OngoingOperationScreen(View):
 
         message = "Для завершения сканировать\nштрихкод еще раз"
         w, h = time_draw.textsize(message, self._font_s)
-        time_draw.text((self._width - w / 2, 67), message, font=self._font_s, fill=0, align="center")
+        time_draw.text((self._width - w / 2, 67), message, font=self._font_s, fill=0,
+                       align="center")
         start_time = dt.now()
 
-        while self.name == self.context.state:
+        while self.name == self._display.state:
             timer_delta = dt.now() - start_time
             timer = dt.utcfromtimestamp(timer_delta.total_seconds())
             message = timer.strftime("%H:%M:%S")
@@ -283,9 +261,6 @@ class OngoingOperationScreen(View):
 
 class BlankScreen(View):
     """used to clear the screen before and after usage"""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def display(self) -> None:
         logging.info("Clearing the screen")
