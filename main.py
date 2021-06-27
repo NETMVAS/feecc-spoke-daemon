@@ -17,7 +17,7 @@ from Spoke import Spoke
 logging.basicConfig(
     level=logging.DEBUG,
     # filename="spoke-daemon.log",
-    format="%(asctime)s %(levelname)s: %(message)s"
+    format="%(asctime)s %(levelname)s: %(message)s",
 )
 
 spoke = Spoke()  # initialize Spoke object
@@ -51,7 +51,8 @@ class HidEventHandler(Resource):
             self._handle_barcode_event(event_dict)
         else:
             logging.error(
-                "Sender of the event dict is not mentioned in the config. Can't handle the request.")
+                "Sender of the event dict is not mentioned in the config. Can't handle the request."
+            )
 
     @staticmethod
     def _handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
@@ -77,17 +78,14 @@ class HidEventHandler(Resource):
                     payload = {
                         "workbench_no": spoke.number,
                         "production_stage_name": spoke.config["general"]["production_stage_name"],
-                        "additional_info": {}
+                        "additional_info": {},
                     }
 
                     spoke.associated_unit_internal_id = barcode_string
 
                 else:
                     url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
-                    payload = {
-                        "workbench_no": spoke.number,
-                        "additional_info": {}
-                    }
+                    payload = {"workbench_no": spoke.number, "additional_info": {}}
 
                     spoke.associated_unit_internal_id = ""
 
@@ -109,7 +107,8 @@ class HidEventHandler(Resource):
                 spoke.invert_rec_flag()
             else:
                 logging.error(
-                    f"Barcode validation failed: hub returned '{response_data['comment']}'")
+                    f"Barcode validation failed: hub returned '{response_data['comment']}'"
+                )
 
         except Exception as E:
             logging.error(f"Request to the hub failed:\n{E}")
@@ -138,7 +137,7 @@ class HidEventHandler(Resource):
             try:
                 payload = {
                     "workbench_no": spoke.number,
-                    "employee_rfid_card_no": event_dict["string"]
+                    "employee_rfid_card_no": event_dict["string"],
                 }
                 url = f"{spoke.hub_url}/api/employee/log-in"
                 response = requests.post(url=url, json=payload)
@@ -184,6 +183,5 @@ api.add_resource(ResetState, "/api/reset_state")
 if __name__ == "__main__":
     display.render_view(Views.LoginScreen)
     app.run(  # start the server
-        host=spoke.config["api"]["server_ip"],
-        port=spoke.config["api"]["server_port"]
+        host=spoke.config["api"]["server_ip"], port=spoke.config["api"]["server_port"]
     )

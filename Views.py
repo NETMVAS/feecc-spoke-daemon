@@ -97,8 +97,9 @@ class LoginScreen(View):
             footer += f". IPv4: {ipv4}"
 
         w, h = login_screen_draw.textsize(footer, self._font_s)
-        login_screen_draw.text((self._width - w / 2, block_start + 50 + 3), footer,
-                               font=self._font_s, fill=0)
+        login_screen_draw.text(
+            (self._width - w / 2, block_start + 50 + 3), footer, font=self._font_s, fill=0
+        )
 
         # display the image
         self._render_image(login_screen)
@@ -125,7 +126,7 @@ class FailedAuthorizationScreen(View):
             (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15),
             message,
             font=self._font_m,
-            fill=0
+            fill=0,
         )
 
         # display the image
@@ -185,7 +186,7 @@ class AuthorizeFirstScreen(View):
             (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15),
             message,
             font=self._font_m,
-            fill=0
+            fill=0,
         )
 
         # display the image
@@ -220,8 +221,12 @@ class AwaitInputScreen(View):
         # draw the footer
         logging.debug(f"Drawing the footer")
         footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
-        image_draw.text((floor((self._width - footer_w) / 2), 10 + img_h + 10), footer,
-                        font=self._font_s, fill=0)
+        image_draw.text(
+            (floor((self._width - footer_w) / 2), 10 + img_h + 10),
+            footer,
+            font=self._font_s,
+            fill=0,
+        )
 
         # draw the image
         self._render_image(image)
@@ -241,8 +246,9 @@ class OngoingOperationScreen(View):
 
         message = "Для завершения сканировать\nштрихкод еще раз"
         w, h = time_draw.textsize(message, self._font_s)
-        time_draw.text((self._width - w / 2, 67), message, font=self._font_s, fill=0,
-                       align="center")
+        time_draw.text(
+            (self._width - w / 2, 67), message, font=self._font_s, fill=0, align="center"
+        )
         start_time = dt.now()
 
         while self.name == self._display.state:

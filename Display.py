@@ -46,7 +46,8 @@ class Display:
             # drop pending View if it is the same one
             if self.state == previous_state:
                 logging.info(
-                    f"Pending View ({self.state}) matches the current View. View render dropped.")
+                    f"Pending View ({self.state}) matches the current View. View render dropped."
+                )
                 return
 
             logging.debug(f"Display busy. Waiting to draw {self.state}")

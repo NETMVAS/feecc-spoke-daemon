@@ -61,7 +61,9 @@ class Spoke:
         try:
             with open(config_path) as f:
                 content = f.read()
-                config_f: tp.Dict[str, tp.Dict[str, tp.Any]] = yaml.load(content, Loader=yaml.FullLoader)
+                config_f: tp.Dict[str, tp.Dict[str, tp.Any]] = yaml.load(
+                    content, Loader=yaml.FullLoader
+                )
                 logging.debug(f"Configuration dict: {config_f}")
                 return config_f
         except Exception as e:
@@ -87,10 +89,7 @@ class Spoke:
         if self.recording_in_progress:
             if not self.config["developer"]["disable_barcode_validation"]:
                 url = f"{self.hub_url}/api/unit/{self.associated_unit_internal_id}/end"
-                payload = {
-                    "workbench_no": self.number,
-                    "additional_info": {}
-                }
+                payload = {"workbench_no": self.number, "additional_info": {}}
 
                 requests.post(url=url, json=payload)
 
