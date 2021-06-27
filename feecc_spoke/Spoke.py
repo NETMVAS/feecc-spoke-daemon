@@ -17,11 +17,13 @@ class Spoke:
 
     @property
     def number(self) -> int:
-        return self.config["general"]["workbench_no"]
+        workbench_no: int = self.config["general"]["workbench_no"]
+        return workbench_no
 
     @property
     def hub_url(self) -> str:
-        return self.config["endpoints"]["hub_socket"]
+        hub_socket: str = self.config["endpoints"]["hub_socket"]
+        return hub_socket
 
     def invert_rec_flag(self) -> None:
         self.recording_in_progress = not self.recording_in_progress
