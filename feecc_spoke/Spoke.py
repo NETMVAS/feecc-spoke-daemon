@@ -54,7 +54,8 @@ class Spoke:
         :return: dictionary containing all the configurations
         :rtype: dict
 
-        Reading config, containing all the required data, such as filepath, robonomics parameters (remote wss, seed),
+        Reading config, containing all the required data, such as filepath,
+        robonomics parameters (remote wss, seed),
         camera parameters (ip, login, password, port), etc
         """
 
@@ -73,7 +74,7 @@ class Spoke:
             sys.exit()
 
     def identify_sender(self, sender_device_name: str) -> str:
-        """identify, from which device the input is coming from and if it is known return it's role"""
+        """identify, which device the input is coming from and if it is known return it's role"""
 
         known_hid_devices: tp.Dict[str, str] = self.config["known_hid_devices"]
         sender = ""  # name of the sender device

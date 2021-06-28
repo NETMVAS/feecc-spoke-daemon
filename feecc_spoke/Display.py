@@ -6,7 +6,7 @@ from time import sleep
 from Employee import Employee
 from Spoke import Spoke
 from Views import BlankScreen, View
-from waveshare_epd import epd2in13d
+from waveshare_epd import epd2in13d, epdconfig
 
 # Set output log level
 logging.basicConfig(level=logging.DEBUG)
@@ -60,7 +60,7 @@ class Display:
         """clear the screen if execution is interrupted or script exits"""
 
         self.render_view(BlankScreen)
-        feecc_spoke.waveshare_epd.epdconfig.module_exit()  # type: ignore
+        epdconfig.module_exit()  # type: ignore
 
         if self._display_thread:
             self._display_thread.join(timeout=1)

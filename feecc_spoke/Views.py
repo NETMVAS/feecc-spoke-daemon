@@ -201,7 +201,7 @@ class AwaitInputScreen(View):
     """displays the barcode scan prompt"""
 
     def display(self) -> None:
-        logging.info(f"Display barcode scan prompt")
+        logging.info("Display barcode scan prompt")
 
         image = Image.new("1", (self._height, self._width), 255)
         message = "Сканируйте\nштрихкод"
@@ -213,17 +213,17 @@ class AwaitInputScreen(View):
         barcode_image = Image.open("img/barcode.png")
 
         # draw the barcode icon
-        logging.debug(f"Drawing the barcode icon")
+        logging.debug("Drawing the barcode icon")
         img_h, img_w = (50, 50)
         barcode_image = barcode_image.resize((img_h, img_w))
         image.paste(barcode_image, (10, 10))
 
         # draw the text
-        logging.debug(f"Drawing the main message")
+        logging.debug("Drawing the main message")
         image_draw.text((10 + img_w + 10, 10), message, font=self._font_m, fill=0)
 
         # draw the footer
-        logging.debug(f"Drawing the footer")
+        logging.debug("Drawing the footer")
         footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
         image_draw.text(
             (floor((self._width - footer_w) / 2), 10 + img_h + 10),

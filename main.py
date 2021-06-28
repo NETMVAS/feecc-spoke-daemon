@@ -58,7 +58,7 @@ class HidEventHandler(Resource):
     def _handle_barcode_event(event_dict: tp.Dict[str, tp.Any]) -> None:
         # ignore the event if unauthorized
         if not worker.is_authorized:
-            logging.info(f"Ignoring barcode event: worker not authorized.")
+            logging.info("Ignoring barcode event: worker not authorized.")
             display.render_view(Views.AuthorizeFirstScreen)
             sleep(3)
             display.render_view(Views.LoginScreen)
