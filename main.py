@@ -17,7 +17,7 @@ from feecc_spoke.Spoke import Spoke
 logging.basicConfig(
     level=logging.DEBUG,
     # filename="spoke-daemon.log",
-    format="%(asctime)s %(levelname)s: %(message)s",
+    format="%(levelname)s (%(asctime)s): %(message)s",
 )
 
 spoke = Spoke()  # initialize Spoke object

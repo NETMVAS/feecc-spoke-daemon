@@ -65,7 +65,7 @@ class View(ABC):
     def display(self) -> None:
         """a universal method that constructs the view and draws it onto a screen"""
 
-        pass
+        raise NotImplementedError
 
 
 class LoginScreen(View):
