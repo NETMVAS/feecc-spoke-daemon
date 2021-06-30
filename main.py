@@ -1,37 +1,24 @@
-import atexit
 import json
 import logging
 import typing as tp
-from time import sleep
 
 import requests
 from flask import Flask, request, Response
 from flask_restful import Api, Resource
 
-from feecc_spoke import Views
-from feecc_spoke.Display import Display
 from feecc_spoke.Employee import Employee
 from feecc_spoke.Spoke import Spoke
 
 # set up logging
 logging.basicConfig(
     level=logging.DEBUG,
-    # filename="spoke-daemon.log",
     format="%(levelname)s (%(asctime)s): %(message)s",
 )
 
 spoke = Spoke()  # initialize Spoke object
 worker = Employee()  # create Employee object
-display: Display = Display(worker, spoke)  # instantiate Display
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
-
-
-@atexit.register  # define the behaviour when the script execution is completed
-def end_session() -> None:
-    """clear the display, release SPI and join the thread before exiting"""
-
-    display.end_session()
 
 
 class HidEventHandler(Resource):
@@ -59,9 +46,6 @@ class HidEventHandler(Resource):
         # ignore the event if unauthorized
         if not worker.is_authorized:
             logging.info("Ignoring barcode event: worker not authorized.")
-            display.render_view(Views.AuthorizeFirstScreen)
-            sleep(3)
-            display.render_view(Views.LoginScreen)
             return
 
         # make a request to the hub regarding the barcode
@@ -97,12 +81,10 @@ class HidEventHandler(Resource):
                 if spoke.recording_in_progress:
                     # switch back to await screen
                     logging.debug("Recording in progress. Stopping.")
-                    display.render_view(Views.AwaitInputScreen)
 
                 else:
                     # switch to ongoing operation screen since validation succeeded
                     logging.debug("Starting recording.")
-                    display.render_view(Views.OngoingOperationScreen)
 
                 spoke.invert_rec_flag()
             else:
@@ -124,7 +106,6 @@ class HidEventHandler(Resource):
             url = f"{spoke.hub_url}/api/employee/log-out"
             requests.post(url=url, json=payload)
 
-            display.render_view(Views.LoginScreen)
             return
 
         # perform development log in if set in config
@@ -154,22 +135,12 @@ class HidEventHandler(Resource):
             except Exception as E:
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
-        if worker.is_authorized:
-            display.render_view(Views.SuccessfulAuthorizationScreen)
-            sleep(3)
-            display.render_view(Views.AwaitInputScreen)
-        else:
-            display.render_view(Views.FailedAuthorizationScreen)
-            sleep(3)
-            display.render_view(Views.LoginScreen)
-
 
 class ResetState(Resource):
     """resets Spoke state back to 0 in case of a corresponding POST request"""
 
     @staticmethod
     def post() -> Response:
-        display.render_view(Views.LoginScreen)
         message = {"message": "Successful state transition back to 0"}
         payload = json.dumps(message)
         return Response(response=payload, status=200)
@@ -181,7 +152,6 @@ api.add_resource(ResetState, "/api/reset_state")
 
 # entry point
 if __name__ == "__main__":
-    display.render_view(Views.LoginScreen)
     app.run(  # start the server
         host=spoke.config["api"]["server_ip"], port=spoke.config["api"]["server_port"]
     )
