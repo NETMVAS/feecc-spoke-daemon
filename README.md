@@ -1,17 +1,27 @@
 # Feecc-Spoke Daemon
-Daemon of the Spoke device of the Feecc QA system.
+Daemon of the Spoke device of the Feecc QA system. With headless compatibility (automatic fallback).
 
 ## Installation:
 
+Install needed packages:
+
+`sudo apt install -y python3 vim git`
+
+Clone the repository:
+
+`git clone https://github.com/NETMVAS/feecc-spoke-daemon`
+
+Edit the configuration file:
+
 ```
-git clone https://github.com/NETMVAS/feecc-spoke-daemon --recursive
-cd feecc-spoke-daemon && git checkout spoke-edition
+cd feecc-spoke-daemon
+vim config.yaml
 ```
 
-### via Poetry
+Install Poetry:
 
-`poetry install`
+`pip3 install poetry`
 
-### via python-pip
+Run the installation script:
 
-`pip3 install -r requirements.txt`
+`sudo python install.py`
