@@ -41,7 +41,6 @@ class View(ABC):
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
-
         if self._display.spoke_config["developer"]["render_images"]:
             if not os.path.isdir("img"):
                 os.mkdir("img")
@@ -52,7 +51,6 @@ class View(ABC):
 
     def _render_image(self, image: Image) -> None:
         """display the provided image and save it if needed"""
-
         self._save_image(image)
         logging.info(f"Rendering {self.name} view on the screen")
         self._epd.display(self._epd.getbuffer(image))
@@ -64,7 +62,6 @@ class View(ABC):
     @abstractmethod
     def display(self) -> None:
         """a universal method that constructs the view and draws it onto a screen"""
-
         raise NotImplementedError
 
 

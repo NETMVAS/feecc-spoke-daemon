@@ -47,7 +47,6 @@ class Display:
 
     def render_view(self, new_state: tp.Type[View]) -> None:
         """handle display state change in a separate thread"""
-
         if self.headless_mode:
             return
 
@@ -72,7 +71,6 @@ class Display:
 
     def end_session(self) -> None:
         """clear the screen if execution is interrupted or script exits"""
-
         if self.headless_mode:
             return
 
@@ -84,7 +82,6 @@ class Display:
 
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
-
         self._display_busy = True  # raise the flag
         logging.info(f"View changed to {self.state}")
 

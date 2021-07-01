@@ -31,7 +31,6 @@ class Spoke:
     @staticmethod
     def ipv4() -> str:
         """gets device's own ipv4 address on the local network"""
-
         command = "ip address | grep 192.168"
         output: str = subprocess.check_output(command, shell=True, text=True)
         ipv4 = ""
@@ -58,7 +57,6 @@ class Spoke:
         robonomics parameters (remote wss, seed),
         camera parameters (ip, login, password, port), etc
         """
-
         logging.debug(f"Looking for config at {config_path}")
 
         try:
@@ -75,7 +73,6 @@ class Spoke:
 
     def identify_sender(self, sender_device_name: str) -> str:
         """identify, which device the input is coming from and if it is known return it's role"""
-
         known_hid_devices: tp.Dict[str, str] = self.config["known_hid_devices"]
         sender = ""  # name of the sender device
 
@@ -88,7 +85,6 @@ class Spoke:
 
     def end_recording(self) -> None:
         """ends recording if there is any"""
-
         if self.recording_in_progress:
             if not self.config["developer"]["disable_barcode_validation"]:
                 url = f"{self.hub_url}/api/unit/{self.associated_unit_internal_id}/end"

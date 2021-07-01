@@ -12,7 +12,6 @@ class Employee:
 
     def log_in(self, position: str, full_name: str) -> None:
         """end working session and log out the worker"""
-
         self.full_name = full_name
         self.position = position
         self.is_authorized = True
@@ -20,7 +19,6 @@ class Employee:
 
     def log_out(self) -> None:
         """end working session and log out the worker"""
-
         self.full_name = ""
         self.position = ""
         self.is_authorized = False
@@ -31,7 +29,6 @@ class Employee:
         shortens name like so:
         Ivanov Ivan Ivanovich -> Ivanov I. I.
         """
-
         full_name: str = self.full_name
         name = full_name.split(" ")
         short_name = [name[0]]
