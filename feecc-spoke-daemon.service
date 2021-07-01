@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/pi/feecc-spoke-daemon
-ExecStart=python3 /home/pi/feecc-spoke-daemon/main.py
-User=pi
+WorkingDirectory=PROJECT_DIRECTORY
+ExecStart=PROJECT_DIRECTORY/.venv/bin/python PROJECT_DIRECTORY/main.py
+User=PROJECT_USER
 Restart=on-failure
 
 [Install]

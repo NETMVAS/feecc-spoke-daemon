@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import logging
+import os
 import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from math import floor
-import os
+
 from PIL import Image, ImageDraw, ImageFont
 
-import waveshare_epd.epd2in13d
-
 if tp.TYPE_CHECKING:
+    from .waveshare_epd import epd2in13d
     from Display import Display
 
 
@@ -28,7 +28,7 @@ class View(ABC):
     def __init__(self, context: Display) -> None:
         # associated display parameters
         self._display: Display = context
-        self._epd: waveshare_epd.epd2in13d.EPD = self._display.epd
+        self._epd: epd2in13d.EPD = self._display.epd
         self._height: int = self._epd.height
         self._width: int = self._epd.width
         logging.debug(f"{self.name} context set as {self._display}")

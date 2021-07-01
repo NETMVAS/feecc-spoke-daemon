@@ -12,6 +12,9 @@ Flask-RESTful = "^0.3.9"
 requests = "^2.25.1"
 PyYAML = "^5.4.1"
 Pillow-PIL = "^0.1dev"
+"RPi.GPIO" = "0.7.1a4"
+"Jetson.GPIO" = "^2.0.17"
+spidev = "^3.5"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.812"

@@ -3,13 +3,14 @@ import threading
 import typing as tp
 from time import sleep
 
-from Employee import Employee
-from Spoke import Spoke
-from Views import BlankScreen, View
-from waveshare_epd import epd2in13d, epdconfig
+from .Employee import Employee
+from .Spoke import Spoke
+from .Views import BlankScreen, View
 
-# Set output log level
-logging.basicConfig(level=logging.DEBUG)
+try:
+    from .waveshare_epd import epd2in13d, epdconfig
+except Exception as E:
+    logging.error(f"Couldn't import EPD library: {E}")
 
 
 # This set of classes implements the "State" pattern
@@ -25,7 +26,13 @@ class Display:
         self.associated_worker: Employee = associated_worker
         self.associated_spoke: Spoke = associated_spoke
         self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
-        self.epd: epd2in13d.EPD = epd2in13d.EPD()
+        self.epd: tp.Optional[epd2in13d.EPD] = None
+
+        try:
+            self.epd = epd2in13d.EPD()
+        except Exception as E:
+            logging.warning(f"E-ink display initialization failed. Fallback to headless mode.")
+            logging.debug(E)
 
         # thread for the display to run in
         self._display_thread: tp.Optional[threading.Thread] = None
@@ -34,8 +41,15 @@ class Display:
         # clear the screen at the first start in case it has leftover images on it
         self.render_view(BlankScreen)
 
+    @property
+    def headless_mode(self) -> bool:
+        return self.epd is None
+
     def render_view(self, new_state: tp.Type[View]) -> None:
         """handle display state change in a separate thread"""
+
+        if self.headless_mode:
+            return
 
         previous_state: str = self.state
         self._state = new_state(self)
@@ -58,6 +72,9 @@ class Display:
 
     def end_session(self) -> None:
         """clear the screen if execution is interrupted or script exits"""
+
+        if self.headless_mode:
+            return
 
         self.render_view(BlankScreen)
         epdconfig.module_exit()  # type: ignore

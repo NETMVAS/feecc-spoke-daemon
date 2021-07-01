@@ -1,13 +1,13 @@
 general: # miscellaneous parameters
   workbench_no: 1 # associated workbench number
-  production_stage_name: "Final assembly"
+  production_stage_name: "Assembly"
 
 endpoints:
-  hub_socket: "http://192.168.1.2:5000" # hub api socket on the LAN
+  hub_socket: "http://127.0.0.1:5000" # hub api socket on the LAN
 
 api: # settings regarding rest api server
-  server_ip: "0.0.0.0" # an ip a server will run on
-  server_port: 5000 # port for the server to run on
+  server_ip: "127.0.0.1" # an ip a server will run on
+  server_port: 8080 # port for the server to run on
 
 known_hid_devices: # known attached devices with their full names
   rfid_reader: "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
