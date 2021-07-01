@@ -26,6 +26,7 @@ if __name__ == "__main__":
         f"sudo systemctl stop {systemd_service}",
         f"sudo systemctl disable {systemd_service}",
         f"sudo rm /etc/systemd/system/{systemd_service}",
+        "sudo systemctl daemon-reload",
         "rm -rf .venv",
         "rm -f poetry.lock",
     ]
