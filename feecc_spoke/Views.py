@@ -28,7 +28,7 @@ class View(ABC):
     def __init__(
         self,
         context: Display,
-        font_path: str = "fonts/helvetica-cyrillic-bold.ttf"
+        font_path: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
     ) -> None:
         # associated display parameters
         self._display: Display = context
