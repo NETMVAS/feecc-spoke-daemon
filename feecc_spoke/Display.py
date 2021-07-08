@@ -1,7 +1,7 @@
 import logging
 import threading
 import typing as tp
-from time import sleep
+from time import sleep, time
 
 from .Employee import Employee
 from .Spoke import Spoke
@@ -30,9 +30,9 @@ class Display:
 
         try:
             self.epd = epd2in13d.EPD()
-        except Exception as E:
+        except Exception as e:
             logging.warning(f"E-ink display initialization failed. Fallback to headless mode.")
-            logging.debug(E)
+            logging.debug(e)
 
         # thread for the display to run in
         self._display_thread: tp.Optional[threading.Thread] = None
@@ -86,7 +86,10 @@ class Display:
         logging.info(f"View changed to {self.state}")
 
         if self._state:
+            start_time: float = time()
             self._state.display()
+            end_time: float = time()
+            logging.debug(f"View '{self.state}' displayed in {end_time - start_time} s.")
 
         self._display_busy = False  # remove the flag
 

@@ -25,7 +25,11 @@ class View(ABC):
     each view is responsible for an image drawn on the screen
     """
 
-    def __init__(self, context: Display) -> None:
+    def __init__(
+        self,
+        context: Display,
+        font_path: str = "fonts/helvetica-cyrillic-bold.ttf"
+    ) -> None:
         # associated display parameters
         self._display: Display = context
         self._epd: epd2in13d.EPD = self._display.epd
@@ -34,7 +38,7 @@ class View(ABC):
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
-        font_path = "fonts/helvetica-cyrillic-bold.ttf"
+        logging.debug(f"Using font {os.path.basename(font_path)}")
         self._font_s = ImageFont.truetype(font_path, 11)
         self._font_m = ImageFont.truetype(font_path, 20)
         self._font_l = ImageFont.truetype(font_path, 36)
