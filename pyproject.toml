@@ -15,11 +15,13 @@ Pillow-PIL = "^0.1dev"
 "RPi.GPIO" = "0.7.1a4"
 "Jetson.GPIO" = "^2.0.17"
 spidev = "^3.5"
+types-requests = "^2.25.0"
+types-PyYAML = "^5.4.3"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.812"
+mypy = "^0.910"
 black = "^21.6b0"
-pylint = "^2.8.3"
+pylint = "^2.9.3"
 vulture = "^2.3"
 flake8 = "^3.9.2"
 
