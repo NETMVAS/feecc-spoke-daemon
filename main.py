@@ -5,7 +5,7 @@ import typing as tp
 from time import sleep
 
 import requests
-from flask import Flask, request, Response
+from flask import Flask, Response, request
 from flask_restful import Api, Resource
 
 from feecc_spoke import Views
@@ -16,11 +16,11 @@ from feecc_spoke.Spoke import Spoke
 # set up logging
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(levelname)s (%(asctime)s): %(message)s",
+    format="%(levelname)s (%(asctime)s) [%(module)s:%(funcName)s]: %(message)s",
 )
 
-spoke = Spoke()  # initialize Spoke object
-worker = Employee()  # create Employee object
+spoke: Spoke = Spoke()  # initialize Spoke object
+worker: Employee = Employee()  # create Employee object
 display: Display = Display(worker, spoke)  # instantiate Display
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
