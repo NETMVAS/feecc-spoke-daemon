@@ -6,7 +6,7 @@
 # *----------------
 # * | This version:   V1.0
 # * | Date        :   2019-06-21
-# * | Info        :   
+# * | Info        :
 # ******************************************************************************
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documnetation files (the "Software"), to deal
@@ -96,21 +96,23 @@ class JetsonNano:
 
     def __init__(self):
         import ctypes
+
         find_dirs = [
             os.path.dirname(os.path.realpath(__file__)),
-            '/usr/local/lib',
-            '/usr/lib',
+            "/usr/local/lib",
+            "/usr/lib",
         ]
         self.SPI = None
         for find_dir in find_dirs:
-            so_filename = os.path.join(find_dir, 'sysfs_software_spi.so')
+            so_filename = os.path.join(find_dir, "sysfs_software_spi.so")
             if os.path.exists(so_filename):
                 self.SPI = ctypes.cdll.LoadLibrary(so_filename)
                 break
         if self.SPI is None:
-            raise RuntimeError('Cannot find sysfs_software_spi.so')
+            raise RuntimeError("Cannot find sysfs_software_spi.so")
 
         import Jetson.GPIO
+
         self.GPIO = Jetson.GPIO
 
     def digital_write(self, pin, value):
@@ -146,10 +148,10 @@ class JetsonNano:
         self.GPIO.cleanup()
 
 
-if os.path.exists('/sys/bus/platform/drivers/gpiomem-bcm2835'):
+if os.path.exists("/sys/bus/platform/drivers/gpiomem-bcm2835"):
     implementation = RaspberryPi()
 else:
     implementation = JetsonNano()  # type: ignore
 
-for func in [x for x in dir(implementation) if not x.startswith('_')]:
+for func in [x for x in dir(implementation) if not x.startswith("_")]:
     setattr(sys.modules[__name__], func, getattr(implementation, func))

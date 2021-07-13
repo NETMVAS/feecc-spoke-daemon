@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 if tp.TYPE_CHECKING:
     from .waveshare_epd import epd2in13d
+    from PIL.ImageFont import FreeTypeFont
     from Display import Display
 
 
@@ -26,9 +27,7 @@ class View(ABC):
     """
 
     def __init__(
-        self,
-        context: Display,
-        font_path: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
+        self, context: Display, font_path: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
     ) -> None:
         # associated display parameters
         self._display: Display = context
@@ -39,9 +38,9 @@ class View(ABC):
 
         # fonts
         logging.debug(f"Using font {os.path.basename(font_path)}")
-        self._font_s = ImageFont.truetype(font_path, 11)
-        self._font_m = ImageFont.truetype(font_path, 20)
-        self._font_l = ImageFont.truetype(font_path, 36)
+        self._font_s: FreeTypeFont = ImageFont.truetype(font_path, 11)
+        self._font_m: FreeTypeFont = ImageFont.truetype(font_path, 20)
+        self._font_l: FreeTypeFont = ImageFont.truetype(font_path, 36)
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
@@ -67,6 +66,79 @@ class View(ABC):
     def display(self) -> None:
         """a universal method that constructs the view and draws it onto a screen"""
         raise NotImplementedError
+
+
+class Alert(View):
+    """display a message with an icon (an alert)"""
+
+    def __init__(
+        self,
+        context: Display,
+        image_path: str,
+        alert_message: str,
+        font: tp.Optional[FreeTypeFont] = None,
+    ) -> None:
+        super().__init__(context)
+        self._image_path: str = image_path
+        self._message: str = alert_message
+        self._font: FreeTypeFont = font if font else self._font_m
+
+    def display(self) -> None:
+        # init image
+        alert_screen = Image.new("1", (self._height, self._width), 255)
+        alert_draw = ImageDraw.Draw(alert_screen)
+
+        # draw the icon
+        icon = Image.open(self._image_path)
+        img_h, img_w = (50, 50)
+        icon = icon.resize((img_h, img_w))
+        alert_screen.paste(icon, (20, floor((self._width - img_h) / 2)))
+
+        # draw the alert message
+        message: str = self._message
+        txt_h, txt_w = alert_draw.textsize(message, self._font)
+        text_position = (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15)
+        alert_draw.text(text_position, message, font=self._font, fill=0)
+
+        # display the image
+        self._render_image(alert_screen)
+
+
+class FailedAuthorizationScreen(Alert):
+    """display a message about failed authorization"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "img/cross.png"
+        alert_message: str = "Авторизация\nне пройдена"
+        super().__init__(context, image_path, alert_message)
+
+
+class SuccessfulAuthorizationScreen(Alert):
+    """display a message about successful authorization"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "img/tick.png"
+
+        try:
+            worker_position: str = self._display.associated_worker.position
+            worker_short_name: str = self._display.associated_worker.short_name()
+            alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
+            font: FreeTypeFont = self._font_s
+
+        except KeyError:
+            alert_message: str = "Успешная\nавторизация"
+            font: FreeTypeFont = self._font_m
+
+        super().__init__(context, image_path, alert_message, font)
+
+
+class AuthorizeFirstScreen(Alert):
+    """display a message about authorization needed to scan barcode"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "img/cross.png"
+        alert_message: str = "Необходима\nавторизация"
+        super().__init__(context, image_path, alert_message)
 
 
 class LoginScreen(View):
@@ -102,100 +174,11 @@ class LoginScreen(View):
             footer += f". IPv4: {ipv4}"
 
         w, h = login_screen_draw.textsize(footer, self._font_s)
-        login_screen_draw.text(
-            (self._width - w / 2, block_start + 50 + 3), footer, font=self._font_s, fill=0
-        )
+        text_position = (self._width - w / 2, block_start + 50 + 3)
+        login_screen_draw.text(text_position, footer, font=self._font_s, fill=0)
 
         # display the image
         self._render_image(login_screen)
-
-
-class FailedAuthorizationScreen(View):
-    """display a message about failed authorization"""
-
-    def display(self) -> None:
-        # init image
-        auth_screen = Image.new("1", (self._height, self._width), 255)
-        auth_screen_draw = ImageDraw.Draw(auth_screen)
-
-        # draw the cross sign
-        cross_image = Image.open("img/cross.png")
-        img_h, img_w = (50, 50)
-        cross_image = cross_image.resize((img_h, img_w))
-        auth_screen.paste(cross_image, (20, floor((self._width - img_h) / 2)))
-
-        # draw the message
-        message = "Авторизация\nне пройдена"
-        txt_h, txt_w = auth_screen_draw.textsize(message, self._font_m)
-        auth_screen_draw.text(
-            (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15),
-            message,
-            font=self._font_m,
-            fill=0,
-        )
-
-        # display the image
-        self._render_image(auth_screen)
-
-
-class SuccessfulAuthorizationScreen(View):
-    """display a message about successful authorization"""
-
-    def display(self) -> None:
-        # init image
-        auth_screen = Image.new("1", (self._height, self._width), 255)
-        auth_screen_draw = ImageDraw.Draw(auth_screen)
-
-        # draw the tick sign
-        tick_image = Image.open("img/tick.png")
-        img_h, img_w = (50, 50)
-        tick_image = tick_image.resize((img_h, img_w))
-        auth_screen.paste(tick_image, (20, floor((self._width - img_h) / 2)))
-
-        try:
-            worker_position: str = self._display.associated_worker.position
-            worker_short_name: str = self._display.associated_worker.short_name()
-            message = f"Авторизован\n{worker_position}\n{worker_short_name}"
-
-            # draw the message
-            auth_screen_draw.text((20 + img_w + 10, 30), message, font=self._font_s, fill=0)
-
-        except KeyError:
-            message = "Успешная\nавторизация"
-
-            # draw the message
-            auth_screen_draw.text((20 + img_w + 10, 30), message, font=self._font_m, fill=0)
-
-        # display the image
-        self._render_image(auth_screen)
-
-
-class AuthorizeFirstScreen(View):
-    """display a message about authorization needed to scan barcode"""
-
-    def display(self) -> None:
-        # init image
-        auth_warning_screen = Image.new("1", (self._height, self._width), 255)
-        auth_warning_screen_draw = ImageDraw.Draw(auth_warning_screen)
-
-        # draw the cross sign
-        cross_image = Image.open("img/cross.png")
-        img_h, img_w = (50, 50)
-        cross_image = cross_image.resize((img_h, img_w))
-        auth_warning_screen.paste(cross_image, (20, floor((self._width - img_h) / 2)))
-
-        # draw the message
-        message = "Необходима\nавторизация"
-        txt_h, txt_w = auth_warning_screen_draw.textsize(message, self._font_m)
-        auth_warning_screen_draw.text(
-            (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15),
-            message,
-            font=self._font_m,
-            fill=0,
-        )
-
-        # display the image
-        self._render_image(auth_warning_screen)
 
 
 class AwaitInputScreen(View):
@@ -226,12 +209,8 @@ class AwaitInputScreen(View):
         # draw the footer
         logging.debug("Drawing the footer")
         footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
-        image_draw.text(
-            (floor((self._width - footer_w) / 2), 10 + img_h + 10),
-            footer,
-            font=self._font_s,
-            fill=0,
-        )
+        text_position = (floor((self._width - footer_w) / 2), 10 + img_h + 10)
+        image_draw.text(text_position, footer, font=self._font_s, fill=0)
 
         # draw the image
         self._render_image(image)
@@ -251,9 +230,8 @@ class OngoingOperationScreen(View):
 
         message = "Для завершения сканировать\nштрихкод еще раз"
         w, h = time_draw.textsize(message, self._font_s)
-        time_draw.text(
-            (self._width - w / 2, 67), message, font=self._font_s, fill=0, align="center"
-        )
+        text_position = (self._width - w / 2, 67)
+        time_draw.text(text_position, message, font=self._font_s, fill=0, align="center")
         start_time = dt.now()
 
         while self.name == self._display.state:

@@ -5,9 +5,9 @@ import typing as tp
 
 
 def generate_systemd_service(
-        filename: str,
-        path_placeholder: str = "PROJECT_DIRECTORY",
-        user_placeholder: str = "PROJECT_USER"
+    filename: str,
+    path_placeholder: str = "PROJECT_DIRECTORY",
+    user_placeholder: str = "PROJECT_USER",
 ) -> None:
     """replaces placeholder in the service file to match the actual data"""
     actual_path: str = os.path.dirname(os.path.realpath(__file__))
