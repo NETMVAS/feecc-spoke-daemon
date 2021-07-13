@@ -7,7 +7,7 @@ Daemon of the Spoke device of the Feecc QA system. With headless compatibility (
 
 Install needed packages:
 
-`$ sudo apt install -y python3 vim git`
+`$ sudo apt install -y python3 vim git zlib libjpeg`
 
 Clone the repository:
 
