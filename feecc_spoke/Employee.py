@@ -30,10 +30,16 @@ class Employee:
         Ivanov Ivan Ivanovich -> Ivanov I. I.
         """
         full_name: str = self.full_name
-        name = full_name.split(" ")
-        short_name = [name[0]]
-        for part in name[1:]:
-            part = part[0] + "."
-            short_name.append(part)
 
-        return " ".join(short_name)
+        try:
+            name = full_name.split()
+            short_name = [name[0]]
+            for part in name[1:]:
+                part = part[0] + "."
+                short_name.append(part)
+
+            return " ".join(short_name)
+
+        except Exception as E:
+            logging.error(f"Short name generation failed for the full name '{full_name}'. E: {E}")
+            return full_name
