@@ -25,13 +25,19 @@ pylint = "^2.9.3"
 vulture = "^2.3"
 flake8 = "^3.9.2"
 
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.mypy]
 strict = true
 exclude = ".*epd.*"
 ignore_missing_imports  = true
 allow_subclassing_any = true
-allow_untyped_calls = true
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[[tool.mypy.overrides]]
+module = "feecc_spoke.waveshare_epd.*"
+follow_imports = "skip"
+
+[tool.black]
+line-length = 100
