@@ -31,7 +31,7 @@ class Display:
         try:
             self.epd = epd2in13d.EPD()
         except Exception as e:
-            logging.warning(f"E-ink display initialization failed. Fallback to headless mode.")
+            logging.warning("E-ink display initialization failed. Fallback to headless mode.")
             logging.debug(e)
 
         # thread for the display to run in
@@ -75,7 +75,7 @@ class Display:
             return
 
         self.render_view(BlankScreen)
-        epdconfig.module_exit()  # type: ignore
+        epdconfig.module_exit()
 
         if self._display_thread:
             self._display_thread.join(timeout=1)
