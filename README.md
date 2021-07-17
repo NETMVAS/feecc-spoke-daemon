@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="https://netmvas.github.io/icon.png">
+</p>
+
 <h2 align="center">Feecc Spoke Daemon</h2>
 
 <p align="center">
