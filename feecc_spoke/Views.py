@@ -160,7 +160,7 @@ class LoginScreen(View):
         login_screen_draw.text((35 + 50 + 10, block_start), message, font=self._font_s, fill=0)
 
         # draw the footer
-        footer = f"spoke no.{self._display.spoke_config['general']['spoke_num']}"
+        footer = f"spoke no.{self._display.spoke_config['general']['workbench_no']}"
         ipv4 = self._display.associated_spoke.ipv4()
 
         if ipv4:
