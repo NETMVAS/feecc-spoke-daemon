@@ -1,29 +1,51 @@
-# Feecc-Spoke Daemon
-Daemon of the Spoke device of the Feecc QA system. With headless compatibility (automatic fallback).
+<p align="center">
+    <img src="https://netmvas.github.io/icon.png">
+</p>
 
----
+<h2 align="center">Feecc Spoke Daemon</h2>
 
-## Installation:
+<p align="center">
+    <img alt="Workflow status" src="https://img.shields.io/github/workflow/status/NETMVAS/feecc-spoke-daemon/Python%20CI">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/NETMVAS/feecc-spoke-daemon">
+    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2021">
+    <img alt="Black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+</p>
 
-Install needed packages:
+> Daemon of the Spoke device of the Feecc QA system. With headless compatibility (automatic fallback).
 
-`$ sudo apt install -y python3 vim git zlib libjpeg`
+<h2 align="center">Установка и запуск</h2>
 
-Clone the repository:
+> Для подробной инструкции обратитесь к документации Feecc.
 
-`$ git clone https://github.com/NETMVAS/feecc-spoke-daemon.git`
 
-Edit the configuration file:
+> Предполагаем, что вы уже установили Raspbian (или другой Debian-based дистрибутив Linux) и Python3.
 
-```
-$ cd feecc-spoke-daemon
-$ vim config.yaml
-```
+Установка Poetry:
 
-Install Poetry:
+`curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -`
 
-`$ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -`
+Установим зависимости, необходимые для сборки некоторых используемых модулей:
 
-Run the installation script:
+`sudo apt update && sudo apt install -y zlib1g libjpeg-dev`
 
-`$ sudo python3 install.py`
+Склонируем репозиторий:
+
+`git clone https://github.com/NETMVAS/feecc-spoke-daemon.git`
+
+Установим все необходимые зависимости и активируем виртуальное окружение:
+
+`poetry install && poetry shell`
+
+Поменяем конфигурацию Spoke, файлы которой находятся в `config.yaml`
+
+Установим все компоненты Spoke:
+
+`python install.py`
+
+Перезагрузите устройство. Теперь Spoke готов к работе.
+
+<h2 align="center">Тестирование приложения</h2>
+
+Для запуска тестов выполните:
+
+`pytest .`
