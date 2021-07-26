@@ -48,7 +48,7 @@ class View(ABC):
             if not os.path.isdir("img"):
                 os.mkdir("img")
 
-            image_name = f"img/{self.name}-{str(dt.now()).split('.')[0]}.png"
+            image_name = f"feecc_spoke/img/{self.name}-{str(dt.now()).split('.')[0]}.png"
             image.save(image_name)
             logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
 
@@ -108,7 +108,7 @@ class FailedAuthorizationScreen(Alert):
     """display a message about failed authorization"""
 
     def __init__(self, context: Display) -> None:
-        image_path: str = "img/cross.png"
+        image_path: str = "feecc_spoke/img/cross.png"
         alert_message: str = "Авторизация\nне пройдена"
         super().__init__(context, image_path, alert_message)
 
@@ -117,7 +117,7 @@ class SuccessfulAuthorizationScreen(Alert):
     """display a message about successful authorization"""
 
     def __init__(self, context: Display) -> None:
-        image_path: str = "img/tick.png"
+        image_path: str = "feecc_spoke/img/tick.png"
         worker_position: str = self._display.associated_worker.position
         worker_short_name: str = self._display.associated_worker.short_name()
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
@@ -129,7 +129,7 @@ class AuthorizeFirstScreen(Alert):
     """display a message about authorization needed to scan barcode"""
 
     def __init__(self, context: Display) -> None:
-        image_path: str = "img/cross.png"
+        image_path: str = "feecc_spoke/img/cross.png"
         alert_message: str = "Необходима\nавторизация"
         super().__init__(context, image_path, alert_message)
 
@@ -150,7 +150,7 @@ class LoginScreen(View):
         login_screen_draw.text((self._width - w / 2, 5), heading, font=self._font_m, fill=0)
 
         # draw the RFID sign
-        rfid_image = Image.open("img/rfid.png")
+        rfid_image = Image.open("feecc_spoke/img/rfid.png")
         rfid_image = rfid_image.resize((50, 50))
         block_start = 10 + h + 5
         login_screen.paste(rfid_image, (35, block_start))
@@ -187,7 +187,7 @@ class AwaitInputScreen(View):
         logging.debug(f"Footer: {footer}")
 
         image_draw = ImageDraw.Draw(image)
-        barcode_image = Image.open("img/barcode.png")
+        barcode_image = Image.open("feecc_spoke/img/barcode.png")
 
         # draw the barcode icon
         logging.debug("Drawing the barcode icon")
