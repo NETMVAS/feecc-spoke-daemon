@@ -56,6 +56,7 @@ class View(ABC):
         """display the provided image and save it if needed"""
         self._save_image(image)
         logging.info(f"Rendering {self.name} view on the screen")
+        image.rotate(180)
         self._epd.display(self._epd.getbuffer(image))
 
     @property
