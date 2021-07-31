@@ -121,7 +121,7 @@ class SuccessfulAuthorizationScreen(Alert):
         worker_position: str = context.associated_worker.position
         worker_short_name: str = context.associated_worker.short_name()
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
-        font: FreeTypeFont = self._font_s
+        font: FreeTypeFont = View(context)._font_s
         super().__init__(context, image_path, alert_message, font)
 
 
