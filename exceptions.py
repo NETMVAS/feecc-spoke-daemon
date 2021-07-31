@@ -1,0 +1,2 @@
+class BackendUnreachableError(Exception):
+    pass

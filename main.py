@@ -7,6 +7,7 @@ import requests
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
 
+from exceptions import BackendUnreachableError
 from feecc_spoke import Views
 from feecc_spoke.Display import Display
 from feecc_spoke.Employee import Employee
@@ -28,8 +29,22 @@ api = Api(app)  # create a Flask API
 @atexit.register  # define the behaviour when the script execution is completed
 def end_session() -> None:
     """clear the display, release SPI and join the thread before exiting"""
-
+    display.render_view(Views.BlankScreen)
     display.end_session()
+
+
+def send_request_to_backend(url: str, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, tp.Any]:
+    """try sending request, display error message on failure"""
+    try:
+        response = requests.post(url=url, json=payload)
+        response_data = response.json()
+        return response_data
+
+    except Exception as E:
+        logging.error(f"Backend unreachable: {E}")
+        display.render_view(Views.BackendUnreachableAlert)
+
+        raise BackendUnreachableError
 
 
 class HidEventHandler(Resource):
@@ -86,8 +101,11 @@ class HidEventHandler(Resource):
 
                     spoke.associated_unit_internal_id = ""
 
-                response = requests.post(url=url, json=payload)
-                response_data = response.json()
+                try:
+                    response_data = send_request_to_backend(url, payload)
+                    display.render_view(Views.LoginScreen)
+                except BackendUnreachableError:
+                    return
 
             if response_data["status"]:
                 # end ongoing operation if there is one
@@ -120,9 +138,13 @@ class HidEventHandler(Resource):
 
             payload = {"workbench_no": spoke.number}
             url = f"{spoke.hub_url}/api/employee/log-out"
-            requests.post(url=url, json=payload)
 
-            display.render_view(Views.LoginScreen)
+            try:
+                send_request_to_backend(url, payload)
+                display.render_view(Views.LoginScreen)
+            except BackendUnreachableError:
+                display.render_view(Views.AwaitInputScreen)
+
             return
 
         # perform development log in if set in config
@@ -138,8 +160,12 @@ class HidEventHandler(Resource):
                     "employee_rfid_card_no": event_dict["string"],
                 }
                 url = f"{spoke.hub_url}/api/employee/log-in"
-                response = requests.post(url=url, json=payload)
-                response_data = response.json()
+
+                try:
+                    response_data = send_request_to_backend(url, payload)
+                    display.render_view(Views.LoginScreen)
+                except BackendUnreachableError:
+                    return
 
                 # check if worker authorized and log him in
                 if response_data["status"]:
