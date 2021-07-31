@@ -108,7 +108,7 @@ class Alert(View):
         message: str = self._message
         txt_h, txt_w = alert_draw.textsize(message, self._font)
         text_position = (
-            20 + img_w + 10, floor((self._height - txt_h * self._no_of_lines) / 2) - 15
+            20 + img_w + 10, floor((self._height - (txt_h * self._no_of_lines)) / 2) - 15
         )
         alert_draw.text(text_position, message, font=self._font, fill=0)
 
