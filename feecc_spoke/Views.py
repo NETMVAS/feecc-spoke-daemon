@@ -60,6 +60,10 @@ class View(ABC):
     def _render_image(self, image: Image) -> None:
         """display the provided image and save it if needed"""
         self._save_image(image)
+
+        if self._display.spoke_config["screen"]["rotate_output"]:
+            image = image.rotate(180)
+
         logging.info(f"Rendering {self.name} view on the screen")
         self._epd.display(self._epd.getbuffer(image))
 
@@ -107,9 +111,7 @@ class Alert(View):
         # draw the alert message
         message: str = self._message
         txt_h, txt_w = alert_draw.textsize(message, self._font)
-        text_position = (
-            20 + img_w + 10, floor((self._height - txt_h) / 2) - 15
-        )
+        text_position = (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15)
         alert_draw.text(text_position, message, font=self._font, fill=0)
 
         # display the image
@@ -269,7 +271,12 @@ class OngoingOperationScreen(View):
             time_draw.text((nw_w, 30), message, font=self._font_l, fill=0)
             new_image = time_image.crop([nw_w, 30, nw_w + w, 30 + h])
             time_image.paste(new_image, (nw_w, 30))
-            self._epd.DisplayPartial(self._epd.getbuffer(time_image))
+
+            if self._display.spoke_config["screen"]["rotate_output"]:
+                time_image_rotated = time_image.rotate(180)
+                self._epd.DisplayPartial(self._epd.getbuffer(time_image_rotated))
+            else:
+                self._epd.DisplayPartial(self._epd.getbuffer(time_image))
 
 
 class BlankScreen(View):

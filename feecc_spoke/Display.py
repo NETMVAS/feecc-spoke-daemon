@@ -43,7 +43,7 @@ class Display:
 
     @property
     def headless_mode(self) -> bool:
-        return self.epd is None
+        return any((self.epd is None, self.spoke_config["screen"]["enforce_headless"]))
 
     def render_view(self, new_state: tp.Type[View]) -> None:
         """handle display state change in a separate thread"""
