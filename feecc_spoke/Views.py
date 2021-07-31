@@ -110,7 +110,7 @@ class Alert(View):
 
         # draw the alert message
         message: str = self._message
-        txt_w, txt_h = alert_draw.textsize(message, self._font)
+        txt_h, txt_w = alert_draw.textsize(message, self._font)
         text_position = (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15)
         alert_draw.text(text_position, message, font=self._font, fill=0)
 
@@ -224,7 +224,7 @@ class AwaitInputScreen(View):
 
         # draw the barcode icon
         logging.debug("Drawing the barcode icon")
-        img_w, img_h = (50, 50)
+        img_h, img_w = (50, 50)
         barcode_image = barcode_image.resize((img_h, img_w))
         image.paste(barcode_image, (10, 10))
 
@@ -234,7 +234,7 @@ class AwaitInputScreen(View):
 
         # draw the footer
         logging.debug("Drawing the footer")
-        footer_w, footer_h = image_draw.textsize(footer, font=self._font_s)
+        footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
         text_position = (floor((self._width - footer_w) / 2), 10 + img_h + 10)
         image_draw.text(text_position, footer, font=self._font_s, fill=0)
 
