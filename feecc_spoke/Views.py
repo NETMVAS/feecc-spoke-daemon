@@ -37,8 +37,11 @@ class View(ABC):
         # associated display parameters
         self._display: Display = context
         self._epd: epd2in13d.EPD = self._display.epd
-        self._height: int = self._epd.height
-        self._width: int = self._epd.width
+
+        # display is oriented sideways by default
+        self._height: int = self._epd.width
+        self._width: int = self._epd.height
+
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
@@ -72,9 +75,12 @@ class View(ABC):
         sample_image = Image.new("1", (self._height, self._width), 255)
         sample_draw = ImageDraw.Draw(sample_image)
         txt_w, txt_h = sample_draw.textsize(text, font)
+
+        # https://stackoverflow.com/questions/59008322/pillow-imagedraw-text-coordinates-to-center/59008967#59008967
         offset_w, offset_h = font.getoffset(text)
         txt_h += offset_h
         txt_w += offset_w
+
         text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
         return text_position
 
