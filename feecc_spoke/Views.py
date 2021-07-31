@@ -72,6 +72,9 @@ class View(ABC):
         sample_image = Image.new("1", (self._height, self._width), 255)
         sample_draw = ImageDraw.Draw(sample_image)
         txt_w, txt_h = sample_draw.textsize(text, font)
+        offset_w, offset_h = font.getoffset(text)
+        txt_h += offset_h
+        txt_w += offset_w
         text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
         return text_position
 
