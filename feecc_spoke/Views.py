@@ -19,6 +19,12 @@ if tp.TYPE_CHECKING:
 # which can be displayed on the screen by executing
 # the display method of the View subclass object
 
+# font related constants
+FONT_PATH: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
+SMALL_FONT_SIZE: int = 11
+MEDIUM_FONT_SIZE: int = 20
+LARGE_FONT_SIZE: int = 36
+
 
 class View(ABC):
     """
@@ -26,9 +32,7 @@ class View(ABC):
     each view is responsible for an image drawn on the screen
     """
 
-    def __init__(
-        self, context: Display, font_path: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
-    ) -> None:
+    def __init__(self, context: Display) -> None:
         # associated display parameters
         self._display: Display = context
         self._epd: epd2in13d.EPD = self._display.epd
@@ -37,10 +41,10 @@ class View(ABC):
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
-        logging.debug(f"Using font {os.path.basename(font_path)}")
-        self._font_s: FreeTypeFont = ImageFont.truetype(font_path, 11)
-        self._font_m: FreeTypeFont = ImageFont.truetype(font_path, 20)
-        self._font_l: FreeTypeFont = ImageFont.truetype(font_path, 36)
+        logging.debug(f"Using font {os.path.basename(FONT_PATH)}")
+        self._font_s: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
+        self._font_m: FreeTypeFont = ImageFont.truetype(FONT_PATH, MEDIUM_FONT_SIZE)
+        self._font_l: FreeTypeFont = ImageFont.truetype(FONT_PATH, LARGE_FONT_SIZE)
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
@@ -121,7 +125,7 @@ class SuccessfulAuthorizationScreen(Alert):
         worker_position: str = context.associated_worker.position
         worker_short_name: str = context.associated_worker.short_name()
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
-        font: FreeTypeFont = View(context)._font_s
+        font: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
         super().__init__(context, image_path, alert_message, font)
 
 
