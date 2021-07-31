@@ -37,8 +37,11 @@ class View(ABC):
         # associated display parameters
         self._display: Display = context
         self._epd: epd2in13d.EPD = self._display.epd
-        self._height: int = self._epd.height
-        self._width: int = self._epd.width
+
+        # by default the display is rotated sideways
+        self._height: int = self._epd.width
+        self._width: int = self._epd.height
+
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
@@ -69,7 +72,7 @@ class View(ABC):
 
     def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
         """get the coordinates of centered text"""
-        sample_image = Image.new("1", (self._height, self._width), 255)
+        sample_image = Image.new("1", (self._width, self._height), 255)
         sample_draw = ImageDraw.Draw(sample_image)
         txt_w, txt_h = sample_draw.textsize(text, font)
 
@@ -78,7 +81,7 @@ class View(ABC):
         txt_h += offset_h
         txt_w += offset_w
 
-        text_position = int((self._height - txt_w) / 2), int((self._width - txt_h) / 2)
+        text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
         return text_position
 
     @property
@@ -117,7 +120,7 @@ class Alert(View):
 
     def display(self) -> None:
         # init image
-        alert_screen = Image.new("1", (self._height, self._width), 255)
+        alert_screen = Image.new("1", (self._width, self._height), 255)
         alert_draw = ImageDraw.Draw(alert_screen)
 
         # draw the icon
@@ -192,7 +195,7 @@ class LoginScreen(View):
         logging.info("Display login screen")
 
         # init image
-        login_screen = Image.new("1", (self._height, self._width), 255)
+        login_screen = Image.new("1", (self._width, self._height), 255)
         login_screen_draw = ImageDraw.Draw(login_screen)
 
         # draw the heading
@@ -232,7 +235,7 @@ class AwaitInputScreen(View):
     def display(self) -> None:
         logging.info("Display barcode scan prompt")
 
-        image = Image.new("1", (self._height, self._width), 255)
+        image = Image.new("1", (self._width, self._height), 255)
         message = "Сканируйте\nштрихкод"
 
         footer = f"Авторизован {self._display.associated_worker.short_name()}"
@@ -266,7 +269,7 @@ class OngoingOperationScreen(View):
 
     def display(self) -> None:
         logging.info("Display assembly timer")
-        time_image = Image.new("1", (self._height, self._width), 255)
+        time_image = Image.new("1", (self._width, self._height), 255)
         time_draw = ImageDraw.Draw(time_image)
 
         message = "ИДЕТ ЗАПИСЬ"
