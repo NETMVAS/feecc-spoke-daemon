@@ -113,11 +113,6 @@ class Alert(View):
         self._message: str = alert_message
         self._font: FreeTypeFont = font if font else self._font_m
 
-    @property
-    def _no_of_lines(self) -> int:
-        """get number of lines in the message"""
-        return len(self._message.split("\n"))
-
     def display(self) -> None:
         # init image
         alert_screen = Image.new("1", (self._width, self._height), 255)
@@ -127,7 +122,7 @@ class Alert(View):
         icon = Image.open(self._image_path)
         img_w, img_h = (50, 50)
         icon = icon.resize((img_w, img_h))
-        alert_screen.paste(icon, (20, floor((self._width - img_w) / 2)))
+        alert_screen.paste(icon, (20, floor((self._height - img_h) / 2)))
 
         # draw the alert message
         message: str = self._message
