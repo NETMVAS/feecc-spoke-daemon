@@ -118,8 +118,8 @@ class SuccessfulAuthorizationScreen(Alert):
 
     def __init__(self, context: Display) -> None:
         image_path: str = "feecc_spoke/img/tick.png"
-        worker_position: str = self._display.associated_worker.position
-        worker_short_name: str = self._display.associated_worker.short_name()
+        worker_position: str = context.associated_worker.position
+        worker_short_name: str = context.associated_worker.short_name()
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
         font: FreeTypeFont = self._font_s
         super().__init__(context, image_path, alert_message, font)
