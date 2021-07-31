@@ -133,14 +133,14 @@ class HidEventHandler(Resource):
         # if worker is logged in - log him out
         if worker.is_authorized:
             spoke.end_recording()
-            worker.log_out()
-            display.render_view(Views.SuccessfulLogOutAlert)
 
             payload = {"workbench_no": spoke.number}
             url = f"{spoke.hub_url}/api/employee/log-out"
 
             try:
                 send_request_to_backend(url, payload)
+                worker.log_out()
+                display.render_view(Views.SuccessfulLogOutAlert)
                 display.render_view(Views.LoginScreen)
             except BackendUnreachableError:
                 display.render_view(Views.AwaitInputScreen)
