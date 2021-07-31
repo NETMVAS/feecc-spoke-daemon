@@ -12,7 +12,7 @@ api: # settings regarding rest api server
 known_hid_devices: # known attached devices with their full names
   rfid_reader: "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
   barcode_reader: "HENEX 2D Barcode Scanner"
-`
+
 screen:
   enforce_headless: false # enforce headless mode even on screen compatible devices
   rotate_output: true # rotate output 180 degrees
