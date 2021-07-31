@@ -116,7 +116,7 @@ class Alert(View):
 
         # display the image
         self._render_image(alert_screen)
-        sleep(3)
+        sleep(2)
 
 
 class FailedAuthorizationAlert(Alert):
