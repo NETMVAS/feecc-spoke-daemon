@@ -1,9 +1,9 @@
 general: # miscellaneous parameters
-  workbench_no: 1 # associated workbench number
+  workbench_no: 2 # associated workbench number
   production_stage_name: "Assembly"
 
 endpoints:
-  hub_socket: "http://127.0.0.1:5000" # hub api socket on the LAN
+  hub_socket: "http://192.168.88.254:5000" # hub api socket on the LAN
 
 api: # settings regarding rest api server
   server_ip: "127.0.0.1" # an ip a server will run on
@@ -11,9 +11,9 @@ api: # settings regarding rest api server
 
 known_hid_devices: # known attached devices with their full names
   rfid_reader: "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
-  barcode_reader: "USB Developer Android"
+  barcode_reader: "HENEX 2D Barcode Scanner"
 
 developer: # do not change when used in production, testing only
   disable_id_validation: true # skip validating the ID card and authorize anyone regardless of the ID card no.
   disable_barcode_validation: true # skip validating the barcode
-  render_images: false # save rendered screens locally instead of drawing them onto an e-ink display
+  render_images: true # save rendered screens locally instead of drawing them onto an e-ink display
