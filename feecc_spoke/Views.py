@@ -61,11 +61,23 @@ class View(ABC):
         """display the provided image and save it if needed"""
         self._save_image(image)
 
-        if self._display.spoke_config["screen"]["rotate_output"]:
+        if self._rotate:
             image = image.rotate(180)
 
         logging.info(f"Rendering {self.name} view on the screen")
         self._epd.display(self._epd.getbuffer(image))
+
+    def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
+        """get the coordinates of centered text"""
+        sample_image = Image.new("1", (self._height, self._width), 255)
+        sample_draw = ImageDraw.Draw(sample_image)
+        txt_w, txt_h = sample_draw.textsize(text, font)
+        text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
+        return text_position
+
+    @property
+    def _rotate(self) -> bool:
+        return bool(self._display.spoke_config["screen"]["rotate_output"])
 
     @property
     def name(self) -> str:
@@ -110,8 +122,8 @@ class Alert(View):
 
         # draw the alert message
         message: str = self._message
-        txt_h, txt_w = alert_draw.textsize(message, self._font)
-        text_position = (20 + img_w + 10, floor((self._height - txt_h) / 2) - 15)
+        _, txt_h = self._align_center(message, self._font)
+        text_position = 20 + img_w + 10, txt_h
         alert_draw.text(text_position, message, font=self._font, fill=0)
 
         # display the image
@@ -179,8 +191,9 @@ class LoginScreen(View):
 
         # draw the heading
         heading = "FEECC Spoke v1"
-        w, h = login_screen_draw.textsize(heading, self._font_m)
-        login_screen_draw.text((self._width - w / 2, 5), heading, font=self._font_m, fill=0)
+        w, _ = self._align_center(heading, self._font_m)
+        _, h = login_screen_draw.textsize(heading, self._font_m)
+        login_screen_draw.text((w, 5), heading, font=self._font_m, fill=0)
 
         # draw the RFID sign
         rfid_image = Image.open("feecc_spoke/img/rfid.png")
@@ -199,8 +212,8 @@ class LoginScreen(View):
         if ipv4:
             footer += f". IPv4: {ipv4}"
 
-        w, h = login_screen_draw.textsize(footer, self._font_s)
-        text_position = (self._width - w / 2, block_start + 50 + 3)
+        w, _ = self._align_center(footer, self._font_s)
+        text_position = (w, block_start + 50 + 3)
         login_screen_draw.text(text_position, footer, font=self._font_s, fill=0)
 
         # display the image
@@ -234,8 +247,8 @@ class AwaitInputScreen(View):
 
         # draw the footer
         logging.debug("Drawing the footer")
-        footer_h, footer_w = image_draw.textsize(footer, font=self._font_s)
-        text_position = (floor((self._width - footer_w) / 2), 10 + img_h + 10)
+        footer_w, _ = self._align_center(footer, font=self._font_s)
+        text_position = footer_w, 10 + img_h + 10
         image_draw.text(text_position, footer, font=self._font_s, fill=0)
 
         # draw the image
@@ -251,12 +264,12 @@ class OngoingOperationScreen(View):
         time_draw = ImageDraw.Draw(time_image)
 
         message = "ИДЕТ ЗАПИСЬ"
-        w, h = time_draw.textsize(message, self._font_m)
-        time_draw.text((self._width - w / 2, 10), message, font=self._font_m, fill=0)
+        w, _ = self._align_center(message, self._font_m)
+        time_draw.text((w, 10), message, font=self._font_m, fill=0)
 
         message = "Для завершения сканировать\nштрихкод еще раз"
-        w, h = time_draw.textsize(message, self._font_s)
-        text_position = (self._width - w / 2, 67)
+        w, _ = self._align_center(message, self._font_s)
+        text_position = w, 67
         time_draw.text(text_position, message, font=self._font_s, fill=0, align="center")
         start_time = dt.now()
 
@@ -266,13 +279,13 @@ class OngoingOperationScreen(View):
             message = timer.strftime("%H:%M:%S")
 
             w, h = time_draw.textsize(message, self._font_l)
-            nw_w = floor(self._width - w / 2)
+            nw_w, _ = self._align_center(message, self._font_l)
             time_draw.rectangle((nw_w, 30, nw_w + w, 30 + h), fill=255)
             time_draw.text((nw_w, 30), message, font=self._font_l, fill=0)
             new_image = time_image.crop([nw_w, 30, nw_w + w, 30 + h])
             time_image.paste(new_image, (nw_w, 30))
 
-            if self._display.spoke_config["screen"]["rotate_output"]:
+            if self._rotate:
                 time_image_rotated = time_image.rotate(180)
                 self._epd.DisplayPartial(self._epd.getbuffer(time_image_rotated))
             else:
