@@ -37,11 +37,8 @@ class View(ABC):
         # associated display parameters
         self._display: Display = context
         self._epd: epd2in13d.EPD = self._display.epd
-
-        # display is oriented sideways by default
-        self._height: int = self._epd.width
-        self._width: int = self._epd.height
-
+        self._height: int = self._epd.height
+        self._width: int = self._epd.width
         logging.debug(f"{self.name} context set as {self._display}")
 
         # fonts
@@ -81,7 +78,7 @@ class View(ABC):
         txt_h += offset_h
         txt_w += offset_w
 
-        text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
+        text_position = int((self._height - txt_w) / 2), int((self._width - txt_h) / 2)
         return text_position
 
     @property
