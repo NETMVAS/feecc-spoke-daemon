@@ -38,7 +38,7 @@ def send_request_to_backend(url: str, payload: tp.Dict[str, tp.Any]) -> tp.Dict[
     try:
         response = requests.post(url=url, json=payload)
         response_data = response.json()
-        return response_data
+        return dict(response_data)
 
     except Exception as E:
         logging.error(f"Backend unreachable: {E}")
