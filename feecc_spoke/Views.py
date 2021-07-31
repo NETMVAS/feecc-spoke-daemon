@@ -125,9 +125,9 @@ class Alert(View):
 
         # draw the icon
         icon = Image.open(self._image_path)
-        img_h, img_w = (50, 50)
-        icon = icon.resize((img_h, img_w))
-        alert_screen.paste(icon, (20, floor((self._width - img_h) / 2)))
+        img_w, img_h = (50, 50)
+        icon = icon.resize((img_w, img_h))
+        alert_screen.paste(icon, (20, floor((self._width - img_w) / 2)))
 
         # draw the alert message
         message: str = self._message
