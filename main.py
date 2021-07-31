@@ -2,7 +2,6 @@ import atexit
 import json
 import logging
 import typing as tp
-from time import sleep
 
 import requests
 from flask import Flask, Response, request
@@ -58,8 +57,7 @@ class HidEventHandler(Resource):
         # ignore the event if unauthorized
         if not worker.is_authorized:
             logging.info("Ignoring barcode event: worker not authorized.")
-            display.render_view(Views.AuthorizeFirstScreen)
-            sleep(3)
+            display.render_view(Views.AuthorizeFirstAlert)
             display.render_view(Views.LoginScreen)
             return
 
@@ -118,8 +116,7 @@ class HidEventHandler(Resource):
         if worker.is_authorized:
             spoke.end_recording()
             worker.log_out()
-            display.render_view(Views.SuccessfulLogOutScreen)
-            sleep(3)
+            display.render_view(Views.SuccessfulLogOutAlert)
 
             payload = {"workbench_no": spoke.number}
             url = f"{spoke.hub_url}/api/employee/log-out"
@@ -156,12 +153,10 @@ class HidEventHandler(Resource):
                 logging.error(f"An error occurred while logging the worker in:\n{E}")
 
         if worker.is_authorized:
-            display.render_view(Views.SuccessfulAuthorizationScreen)
-            sleep(3)
+            display.render_view(Views.SuccessfulAuthorizationAlert)
             display.render_view(Views.AwaitInputScreen)
         else:
-            display.render_view(Views.FailedAuthorizationScreen)
-            sleep(3)
+            display.render_view(Views.FailedAuthorizationAlert)
             display.render_view(Views.LoginScreen)
 
 

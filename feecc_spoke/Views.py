@@ -6,6 +6,7 @@ import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from math import floor
+from time import sleep
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -106,9 +107,10 @@ class Alert(View):
 
         # display the image
         self._render_image(alert_screen)
+        sleep(3)
 
 
-class FailedAuthorizationScreen(Alert):
+class FailedAuthorizationAlert(Alert):
     """display a message about failed authorization"""
 
     def __init__(self, context: Display) -> None:
@@ -117,7 +119,7 @@ class FailedAuthorizationScreen(Alert):
         super().__init__(context, image_path, alert_message)
 
 
-class SuccessfulLogOutScreen(Alert):
+class SuccessfulLogOutAlert(Alert):
     """display a message about failed authorization"""
 
     def __init__(self, context: Display) -> None:
@@ -126,7 +128,7 @@ class SuccessfulLogOutScreen(Alert):
         super().__init__(context, image_path, alert_message)
 
 
-class SuccessfulAuthorizationScreen(Alert):
+class SuccessfulAuthorizationAlert(Alert):
     """display a message about successful authorization"""
 
     def __init__(self, context: Display) -> None:
@@ -138,12 +140,21 @@ class SuccessfulAuthorizationScreen(Alert):
         super().__init__(context, image_path, alert_message, font)
 
 
-class AuthorizeFirstScreen(Alert):
+class AuthorizeFirstAlert(Alert):
     """display a message about authorization needed to scan barcode"""
 
     def __init__(self, context: Display) -> None:
         image_path: str = "feecc_spoke/img/cross.png"
         alert_message: str = "Необходима\nавторизация"
+        super().__init__(context, image_path, alert_message)
+
+
+class BackendUnreachableAlert(Alert):
+    """display a message about authorization needed to scan barcode"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "feecc_spoke/img/warning.png"
+        alert_message: str = "Нет связи\nс сервером"
         super().__init__(context, image_path, alert_message)
 
 
