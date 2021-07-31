@@ -118,6 +118,8 @@ class HidEventHandler(Resource):
         if worker.is_authorized:
             spoke.end_recording()
             worker.log_out()
+            display.render_view(Views.SuccessfulLogOutScreen)
+            sleep(3)
 
             payload = {"workbench_no": spoke.number}
             url = f"{spoke.hub_url}/api/employee/log-out"

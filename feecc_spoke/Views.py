@@ -117,6 +117,15 @@ class FailedAuthorizationScreen(Alert):
         super().__init__(context, image_path, alert_message)
 
 
+class SuccessfulLogOutScreen(Alert):
+    """display a message about failed authorization"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "feecc_spoke/img/tick.png"
+        alert_message: str = "Сессия\nзавершена"
+        super().__init__(context, image_path, alert_message)
+
+
 class SuccessfulAuthorizationScreen(Alert):
     """display a message about successful authorization"""
 
