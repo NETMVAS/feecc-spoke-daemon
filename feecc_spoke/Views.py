@@ -50,6 +50,9 @@ class View(ABC):
         self._font_m: FreeTypeFont = ImageFont.truetype(FONT_PATH, MEDIUM_FONT_SIZE)
         self._font_l: FreeTypeFont = ImageFont.truetype(FONT_PATH, LARGE_FONT_SIZE)
 
+    def _get_image(self, fill: int = 255) -> Image:
+        return Image.new("1", (self._width, self._height), fill)
+
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
         if self._display.spoke_config["developer"]["render_images"]:
@@ -71,8 +74,8 @@ class View(ABC):
         self._epd.display(self._epd.getbuffer(image))
 
     def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
-        """get the coordinates of centered text"""
-        sample_image = Image.new("1", (self._width, self._height), 255)
+        """get the coordinates of the upper left corner for the centered text"""
+        sample_image = self._get_image()
         sample_draw = ImageDraw.Draw(sample_image)
         txt_w, txt_h = sample_draw.textsize(text, font)
 
@@ -115,7 +118,7 @@ class Alert(View):
 
     def display(self) -> None:
         # init image
-        alert_screen = Image.new("1", (self._width, self._height), 255)
+        alert_screen = self._get_image()
         alert_draw = ImageDraw.Draw(alert_screen)
 
         # draw the icon
@@ -199,7 +202,7 @@ class LoginScreen(View):
         logging.info("Display login screen")
 
         # init image
-        login_screen = Image.new("1", (self._width, self._height), 255)
+        login_screen = self._get_image()
         login_screen_draw = ImageDraw.Draw(login_screen)
 
         # draw the heading
@@ -239,7 +242,7 @@ class AwaitInputScreen(View):
     def display(self) -> None:
         logging.info("Display barcode scan prompt")
 
-        image = Image.new("1", (self._width, self._height), 255)
+        image = self._get_image()
         message = "Сканируйте\nштрихкод"
 
         footer = f"Авторизован {self._display.associated_worker.short_name()}"
@@ -273,7 +276,7 @@ class OngoingOperationScreen(View):
 
     def display(self) -> None:
         logging.info("Display assembly timer")
-        time_image = Image.new("1", (self._width, self._height), 255)
+        time_image = self._get_image()
         time_draw = ImageDraw.Draw(time_image)
 
         message = "ИДЕТ ЗАПИСЬ"
