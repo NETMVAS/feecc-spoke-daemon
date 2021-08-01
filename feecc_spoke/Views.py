@@ -144,6 +144,15 @@ class FailedAuthorizationAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
+class UnitNotFoundAlert(Alert):
+    """display a message about being unable to find the unit"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = "feecc_spoke/img/cross.png"
+        alert_message: str = "Изделие\nне найдено"
+        super().__init__(context, image_path, alert_message)
+
+
 class SuccessfulLogOutAlert(Alert):
     """display a message about successful log out"""
 
