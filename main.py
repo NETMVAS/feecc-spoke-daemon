@@ -129,6 +129,7 @@ class HidEventHandler(Resource):
                     f"Barcode validation failed: hub returned '{response_data['comment']}'"
                 )
                 display.render_view(Views.UnitNotFoundAlert)
+                display.render_view(Views.AwaitInputScreen)
 
         except Exception as E:
             logging.error(f"Request to the hub failed:\n{E}")
