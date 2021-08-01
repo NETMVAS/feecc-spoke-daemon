@@ -5,7 +5,6 @@ import os
 import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
-from math import floor
 from time import sleep
 
 from PIL import Image, ImageDraw, ImageFont
@@ -125,7 +124,7 @@ class Alert(View):
         icon = Image.open(self._image_path)
         img_w, img_h = (50, 50)
         icon = icon.resize((img_w, img_h))
-        alert_screen.paste(icon, (20, floor((self._height - img_h) / 2)))
+        alert_screen.paste(icon, (20, int((self._height - img_h) / 2)))
 
         # draw the alert message
         message: str = self._message
