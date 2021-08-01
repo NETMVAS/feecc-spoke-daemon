@@ -45,6 +45,18 @@ class Display:
     def headless_mode(self) -> bool:
         return any((self.epd is None, self.spoke_config["screen"]["enforce_headless"]))
 
+    @property
+    def state(self) -> str:
+        return self._state.__class__.__name__
+
+    @property
+    def current_view(self) -> tp.Optional[tp.Type[View]]:
+
+        if self._state is None:
+            return None
+
+        return self._state.__class__
+
     def render_view(self, new_state: tp.Type[View]) -> None:
         """handle display state change in a separate thread"""
         if self.headless_mode:
@@ -92,7 +104,3 @@ class Display:
             logging.debug(f"View '{self.state}' displayed in {end_time - start_time} s.")
 
         self._display_busy = False  # remove the flag
-
-    @property
-    def state(self) -> str:
-        return self._state.__class__.__name__

@@ -29,7 +29,6 @@ api = Api(app)  # create a Flask API
 @atexit.register  # define the behaviour when the script execution is completed
 def end_session() -> None:
     """clear the display, release SPI and join the thread before exiting"""
-    display.render_view(Views.BlankScreen)
     display.end_session()
 
 
@@ -42,7 +41,12 @@ def send_request_to_backend(url: str, payload: tp.Dict[str, tp.Any]) -> tp.Dict[
 
     except Exception as E:
         logging.error(f"Backend unreachable: {E}")
+
+        previous_view: tp.Optional[tp.Type[Views.View]] = display.current_view
         display.render_view(Views.BackendUnreachableAlert)
+
+        if previous_view is not None:
+            display.render_view(previous_view)
 
         raise BackendUnreachableError
 
@@ -143,7 +147,7 @@ class HidEventHandler(Resource):
                 display.render_view(Views.SuccessfulLogOutAlert)
                 display.render_view(Views.LoginScreen)
             except BackendUnreachableError:
-                display.render_view(Views.AwaitInputScreen)
+                pass
 
             return
 

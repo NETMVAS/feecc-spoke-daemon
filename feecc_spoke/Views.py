@@ -145,7 +145,7 @@ class FailedAuthorizationAlert(Alert):
 
 
 class SuccessfulLogOutAlert(Alert):
-    """display a message about failed authorization"""
+    """display a message about successful log out"""
 
     def __init__(self, context: Display) -> None:
         image_path: str = "feecc_spoke/img/tick.png"
@@ -175,7 +175,7 @@ class AuthorizeFirstAlert(Alert):
 
 
 class BackendUnreachableAlert(Alert):
-    """display a message about authorization needed to scan barcode"""
+    """display a message about broken backend connectivity"""
 
     def __init__(self, context: Display) -> None:
         image_path: str = "feecc_spoke/img/warning.png"
