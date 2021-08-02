@@ -98,9 +98,10 @@ class Display:
         logging.info(f"View changed to {self.state}")
 
         if self._state:
+            state_name: str = self.state
             start_time: float = time()
             self._state.display()
             end_time: float = time()
-            logging.debug(f"View '{self.state}' displayed in {end_time - start_time} s.")
+            logging.debug(f"View '{state_name}' displayed in {end_time - start_time} s.")
 
         self._display_busy = False  # remove the flag
