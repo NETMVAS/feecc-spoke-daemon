@@ -111,24 +111,38 @@ class HidEventHandler(Resource):
         response_data: RequestPayload = self._barcode_handling(barcode_string)
         self._post_barcode_handling(response_data)
 
-    @staticmethod
-    def _barcode_handling(barcode_string: str) -> RequestPayload:
+    def _barcode_handling(self, barcode_string: str) -> RequestPayload:
         if spoke.config["developer"]["disable_barcode_validation"]:
             # skip barcode validation
             return {"status": True}
 
-        if not spoke.recording_in_progress:
-            url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
-            payload = {
-                "workbench_no": spoke.number,
-                "production_stage_name": spoke.config["general"]["production_stage_name"],
-                "additional_info": {},
-            }
-            spoke.associated_unit_internal_id = barcode_string
+        if spoke.recording_in_progress:
+            return self.end_operation(barcode_string)
         else:
-            url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
-            payload = {"workbench_no": spoke.number, "additional_info": {}}
-            spoke.associated_unit_internal_id = ""
+            return self.start_operation(barcode_string)
+
+    @staticmethod
+    def start_operation(barcode_string: str) -> RequestPayload:
+        url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
+        payload = {
+            "workbench_no": spoke.number,
+            "production_stage_name": spoke.config["general"]["production_stage_name"],
+            "additional_info": {},
+        }
+        spoke.associated_unit_internal_id = barcode_string
+
+        try:
+            response_data = send_request_to_backend(url, payload)
+        except BackendUnreachableError:
+            response_data = {"status": False}
+
+        return response_data
+
+    @staticmethod
+    def end_operation(barcode_string: str) -> RequestPayload:
+        url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
+        payload = {"workbench_no": spoke.number, "additional_info": {}}
+        spoke.associated_unit_internal_id = ""
 
         try:
             response_data = send_request_to_backend(url, payload)
@@ -168,7 +182,9 @@ class HidEventHandler(Resource):
     def log_out(self) -> None:
         """log employee out"""
         try:
-            spoke.end_recording()
+            if spoke.recording_in_progress:
+                HidEventHandler.end_operation(spoke.associated_unit_internal_id)
+                spoke.recording_in_progress = False
             if not spoke.config["developer"]["disable_id_validation"]:
                 self.send_log_out_request()
             worker.log_out()

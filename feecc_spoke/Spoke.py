@@ -3,7 +3,6 @@ import subprocess
 import sys
 import typing as tp
 
-import requests
 import yaml
 
 
@@ -82,13 +81,3 @@ class Spoke:
                 break
 
         return sender
-
-    def end_recording(self) -> None:
-        """ends recording if there is any"""
-        if self.recording_in_progress:
-            if not self.config["developer"]["disable_barcode_validation"]:
-                url = f"{self.hub_url}/api/unit/{self.associated_unit_internal_id}/end"
-                payload = {"workbench_no": self.number, "additional_info": {}}
-                requests.post(url=url, json=payload)
-
-            self.invert_rec_flag()
