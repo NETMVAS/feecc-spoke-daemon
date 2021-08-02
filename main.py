@@ -22,16 +22,6 @@ logging.basicConfig(level=logging.DEBUG, format=log_format)
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
 
-# daemon initialization
-if __name__ == "__main__":
-    spoke: Spoke = Spoke()  # initialize Spoke object
-    worker: Employee = Employee()  # create Employee object
-    display: Display = Display(worker, spoke)  # instantiate Display
-    display.render_view(Views.LoginScreen)
-    server_ip: str = spoke.config["api"]["server_ip"]
-    server_port: int = int(spoke.config["api"]["server_port"])
-    app.run(host=server_ip, port=server_port)
-
 
 @atexit.register
 def end_session() -> None:
@@ -219,3 +209,13 @@ class ResetState(Resource):
 
 api.add_resource(HidEventHandler, "/api/hid_event")
 api.add_resource(ResetState, "/api/reset_state")
+
+# daemon initialization
+if __name__ == "__main__":
+    spoke: Spoke = Spoke()  # initialize Spoke object
+    worker: Employee = Employee()  # create Employee object
+    display: Display = Display(worker, spoke)  # instantiate Display
+    display.render_view(Views.LoginScreen)
+    server_ip: str = spoke.config["api"]["server_ip"]
+    server_port: int = int(spoke.config["api"]["server_port"])
+    app.run(host=server_ip, port=server_port)
