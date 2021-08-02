@@ -130,7 +130,7 @@ class Alert(View):
         message: str = self._message
         _, txt_h = self._align_center(message, self._font)
         text_position = 20 + img_w + 10, txt_h
-        alert_draw.text(text_position, message, font=self._font, fill=0)
+        alert_draw.text(text_position, message, font=self._font, fill=0, align="center")
 
         # display the image
         self._render_image(alert_screen)
