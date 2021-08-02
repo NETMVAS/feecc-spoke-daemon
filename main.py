@@ -89,7 +89,7 @@ class HidEventHandler(Resource):
                 response_data = {"status": True}
 
             else:
-                if spoke.recording_in_progress:
+                if not spoke.recording_in_progress:
                     url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
                     payload = {
                         "workbench_no": spoke.number,
