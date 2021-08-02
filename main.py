@@ -216,12 +216,15 @@ api.add_resource(ResetState, "/api/reset_state")
 
 def reset_login() -> None:
     """logout the employee if he is logged in on the backend at the startup moment"""
-    url: str = f"{spoke.hub_url}/api/workbench/{spoke.number}/status"
-    workbench_status: RequestPayload = requests.get(url).json()
-    is_logged_in: bool = bool(workbench_status["employee_logged_in"])
-    if is_logged_in:
-        logging.info("Employee is logged in on the backend at the startup moment. Logging out.")
-        HidEventHandler.send_log_out_request()
+    try:
+        url: str = f"{spoke.hub_url}/api/workbench/{spoke.number}/status"
+        workbench_status: RequestPayload = requests.get(url).json()
+        is_logged_in: bool = bool(workbench_status["employee_logged_in"])
+        if is_logged_in:
+            logging.info("Employee is logged in on the backend at the startup moment. Logging out.")
+            HidEventHandler.send_log_out_request()
+    except Exception as e:
+        logging.error(f"Login reset failed: {e}")
 
 
 # daemon initialization
