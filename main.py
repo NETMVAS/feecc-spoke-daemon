@@ -31,7 +31,7 @@ def end_session() -> None:
     logging.info("SIGTERM handling started")
     if worker.is_authorized:
         logging.info("Employee logged in. Logging out before exiting.")
-        HidEventHandler.log_out()
+        HidEventHandler().log_out()
     display.end_session()
     logging.info("SIGTERM handling finished")
 
@@ -158,15 +158,16 @@ class HidEventHandler(Resource):
             spoke.invert_rec_flag()
 
     @staticmethod
-    def log_out() -> None:
-        """log employee out"""
-        spoke.end_recording()
-
+    def send_log_out_request() -> None:
         payload = {"workbench_no": spoke.number}
         url = f"{spoke.hub_url}/api/employee/log-out"
+        send_request_to_backend(url, payload)
 
+    def log_out(self) -> None:
+        """log employee out"""
         try:
-            send_request_to_backend(url, payload)
+            spoke.end_recording()
+            self.send_log_out_request()
             worker.log_out()
             display.render_view(Views.SuccessfulLogOutAlert)
             display.render_view(Views.LoginScreen)
@@ -217,7 +218,7 @@ def reset_login() -> None:
     workbench_status: RequestPayload = requests.get(url).json()
     is_logged_in: bool = bool(workbench_status["employee_logged_in"])
     if is_logged_in:
-        HidEventHandler.log_out()
+        HidEventHandler.send_log_out_request()
 
 
 # daemon initialization
