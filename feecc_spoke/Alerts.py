@@ -62,7 +62,7 @@ class SuccessfulAuthorizationAlert(Alert):
     def __init__(self, context: Display) -> None:
         image_path: str = Icon.tick
         worker_position: str = context.associated_worker.position
-        worker_short_name: str = context.associated_worker.short_name()
+        worker_short_name: str = context.associated_worker.short_name
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
         font: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
         super().__init__(context, image_path, alert_message, font)

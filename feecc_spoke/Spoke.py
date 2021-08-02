@@ -1,74 +1,56 @@
 import logging
+import os
+import re
 import subprocess
 import sys
 import typing as tp
 
 import yaml
 
+from Types import Config
+
 
 class Spoke:
     """stores device's status and operational data"""
 
     def __init__(self) -> None:
-        self.config: tp.Dict[str, tp.Dict[str, tp.Any]] = self._read_configuration()
-        self.recording_in_progress: bool = False
-        self.associated_unit_internal_id: str = ""
+        self.config: Config = self._get_config()
+        self.associated_unit_internal_id: tp.Optional[str] = None
+
+    @property
+    def recording_in_progress(self) -> bool:
+        return self.associated_unit_internal_id is not None
 
     @property
     def number(self) -> int:
-        workbench_no: int = self.config["general"]["workbench_no"]
+        workbench_no: int = int(self.config["general"]["workbench_no"])
         return workbench_no
 
     @property
     def hub_url(self) -> str:
-        hub_socket: str = self.config["endpoints"]["hub_socket"]
+        hub_socket: str = str(self.config["endpoints"]["hub_socket"])
         return hub_socket
 
-    def invert_rec_flag(self) -> None:
-        self.recording_in_progress = not self.recording_in_progress
-
-    @staticmethod
-    def ipv4() -> str:
+    @property
+    def ipv4(self) -> tp.Optional[str]:
         """gets device's own ipv4 address on the local network"""
         command = "ip address | grep 192.168"
         output: str = subprocess.check_output(command, shell=True, text=True)
-        ipv4 = ""
-
-        for word in output.split():
-            if "192.168" in word:
-                ipv4 = word.split("/")[0]
-                break
-
-        if ipv4:
-            logging.info(f"Own ipv4 address is identified as {ipv4}")
-        else:
-            logging.error("Failed to parse own ipv4 address")
-
-        return ipv4
+        ip_addresses: tp.List[str] = re.findall("192.168.\d+.\d+", output)
+        return ip_addresses[0] if ip_addresses else None
 
     @staticmethod
-    def _read_configuration(config_path: str = "config.yaml") -> tp.Dict[str, tp.Dict[str, tp.Any]]:
-        """
-        :return: dictionary containing all the configurations
-        :rtype: dict
-
-        Reading config, containing all the required data, such as filepath,
-        robonomics parameters (remote wss, seed),
-        camera parameters (ip, login, password, port), etc
-        """
-        logging.debug(f"Looking for config at {config_path}")
-
-        try:
-            with open(config_path) as f:
-                content = f.read()
-                config_f: tp.Dict[str, tp.Dict[str, tp.Any]] = yaml.load(
-                    content, Loader=yaml.FullLoader
-                )
-                logging.debug(f"Configuration dict: {config_f}")
-                return config_f
-        except Exception as e:
-            logging.critical(f"Error while reading configuration file: \n{e}")
+    def _get_config(config_path: str = "config.yaml") -> Config:
+        """load up config file"""
+        if not os.path.exists(config_path):
+            logging.critical(f"Configuration file {config_path} doesn't exist. Exiting.")
             sys.exit()
+
+        with open(config_path) as f:
+            content = f.read()
+            config_f: Config = yaml.load(content, Loader=yaml.SafeLoader)
+            logging.debug(f"Configuration dict: {config_f}")
+            return config_f
 
     def identify_sender(self, sender_device_name: str) -> str:
         """identify, which device the input is coming from and if it is known return it's role"""

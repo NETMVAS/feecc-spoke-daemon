@@ -3,6 +3,7 @@ import threading
 import typing as tp
 from time import sleep, time
 
+from Types import Config
 from .Employee import Employee
 from .Spoke import Spoke
 from .ViewBase import View
@@ -14,19 +15,14 @@ except Exception as E:
     logging.error(f"Couldn't import EPD library: {E}")
 
 
-# This set of classes implements the "State" pattern
-# refer to https://refactoring.guru/ru/design-patterns/state
-# for more information on it's principles
-
-
 class Display:
-    """the context class"""
+    """the context class. handles hardware display operation and view management"""
 
     def __init__(self, associated_worker: Employee, associated_spoke: Spoke) -> None:
-        self._state: tp.Optional[View] = None
+        self._view: tp.Optional[View] = None
         self.associated_worker: Employee = associated_worker
         self.associated_spoke: Spoke = associated_spoke
-        self.spoke_config: tp.Dict[str, tp.Dict[str, tp.Any]] = self.associated_spoke.config
+        self.spoke_config: Config = self.associated_spoke.config
         self.epd: tp.Optional[epd2in13d.EPD] = None
 
         try:
@@ -43,36 +39,43 @@ class Display:
         self.render_view(BlankScreen)
 
     @property
-    def headless_mode(self) -> bool:
+    def _headless_mode(self) -> bool:
         return any((self.epd is None, self.spoke_config["screen"]["enforce_headless"]))
 
     @property
-    def state(self) -> str:
-        return self._state.__class__.__name__
+    def view_name(self) -> str:
+        return self._view.__class__.__name__
 
     @property
     def current_view(self) -> tp.Optional[tp.Type[View]]:
+        return None if self._view is None else self._view.__class__
 
-        if self._state is None:
-            return None
+    def end_session(self) -> None:
+        """clear the screen if execution is interrupted or script exits"""
+        if self._headless_mode:
+            return
 
-        return self._state.__class__
+        self.render_view(BlankScreen)
+        epdconfig.module_exit()
+
+        if self._display_thread:
+            self._display_thread.join(timeout=1)
 
     def render_view(self, new_state: tp.Type[View]) -> None:
         """handle display state change in a separate thread"""
-        if self.headless_mode:
+        if self._headless_mode:
             return
 
-        previous_state: str = self.state
-        self._state = new_state(self)
-        logging.info(f"Display: rendering view {self.state}")
+        previous_state: str = self.view_name
+        self._view = new_state(self)
+        logging.info(f"Display: rendering view {self.view_name}")
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
         if self._display_busy:
-            logging.debug(f"Display busy. Waiting to draw {self.state}")
+            logging.debug(f"Display busy. Waiting to draw {self.view_name}")
             # drop pending View if it is the same one which is on the display now
-            if self.state == previous_state:
-                msg = f"Pending View ({self.state}) matches the current View. View render dropped."
+            if self.view_name == previous_state:
+                msg = f"Pending View ({self.view_name}) matches the current View. View render dropped."
                 logging.info(msg)
                 return
             # wait before drawing otherwise
@@ -83,26 +86,15 @@ class Display:
         self._display_thread = threading.Thread(target=self._handle_state_change)
         self._display_thread.start()  # handle the state change in a separate thread
 
-    def end_session(self) -> None:
-        """clear the screen if execution is interrupted or script exits"""
-        if self.headless_mode:
-            return
-
-        self.render_view(BlankScreen)
-        epdconfig.module_exit()
-
-        if self._display_thread:
-            self._display_thread.join(timeout=1)
-
     def _handle_state_change(self) -> None:
         """handle state changing and change the output accordingly"""
         self._display_busy = True  # raise the flag
-        logging.info(f"View changed to {self.state}")
+        logging.info(f"View changed to {self.view_name}")
 
-        if self._state:
-            state_name: str = self.state
+        if self._view:
+            state_name: str = self.view_name
             start_time: float = time()
-            self._state.display()
+            self._view.display()
             end_time: float = time()
             logging.debug(f"View '{state_name}' displayed in {end_time - start_time} s.")
 

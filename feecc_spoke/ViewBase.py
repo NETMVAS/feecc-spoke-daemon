@@ -14,13 +14,20 @@ if tp.TYPE_CHECKING:
     from PIL.ImageFont import FreeTypeFont
     from Display import Display
 
-
-# constants
+# paths
 FONT_PATH: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
 IMAGE_DIRECTORY_PATH: str = "feecc_spoke/img"
+
+# colors (single channel)
+MAIN_COLOR: int = 0
+BG_COLOR: int = 255
+
+# font sizes
 SMALL_FONT_SIZE: int = 11
 MEDIUM_FONT_SIZE: int = 20
 LARGE_FONT_SIZE: int = 36
+
+# misc
 ALERT_DISPLAY_TIME: int = 1
 
 
@@ -45,7 +52,7 @@ class View(ABC):
         self._font_m: FreeTypeFont = ImageFont.truetype(FONT_PATH, MEDIUM_FONT_SIZE)
         self._font_l: FreeTypeFont = ImageFont.truetype(FONT_PATH, LARGE_FONT_SIZE)
 
-    def _get_image(self, fill: int = 255) -> Image:
+    def _get_image(self, fill: int = BG_COLOR) -> Image:
         return Image.new("1", (self._width, self._height), fill)
 
     def _save_image(self, image: Image) -> None:
@@ -153,7 +160,7 @@ class Alert(View):
         message: str = self._message
         _, txt_h = self._align_center(message, self._font)
         text_position = 20 + img_w + 10, txt_h
-        alert_draw.text(text_position, message, font=self._font, fill=0, align="center")
+        alert_draw.text(text_position, message, font=self._font, fill=MAIN_COLOR, align="center")
 
         # display the image
         self._render_image(alert_screen)
@@ -162,9 +169,11 @@ class Alert(View):
 
 @dataclass(frozen=True)
 class Icon:
-    icon_dir: str = IMAGE_DIRECTORY_PATH
-    tick: str = f"{icon_dir}/tick.png"
-    cross: str = f"{icon_dir}/cross.png"
-    warning: str = f"{icon_dir}/warning.png"
-    rfid: str = f"{icon_dir}/rfid.png"
-    barcode_scanner: str = f"{icon_dir}/barcode.png"
+    """stores paths to all the icon image files"""
+
+    _icon_dir: str = IMAGE_DIRECTORY_PATH
+    tick: str = f"{_icon_dir}/tick.png"
+    cross: str = f"{_icon_dir}/cross.png"
+    warning: str = f"{_icon_dir}/warning.png"
+    rfid: str = f"{_icon_dir}/rfid.png"
+    barcode_scanner: str = f"{_icon_dir}/barcode.png"

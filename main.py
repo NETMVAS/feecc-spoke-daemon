@@ -143,7 +143,7 @@ class HidEventHandler(Resource):
 
     @staticmethod
     def end_operation(barcode_string: str) -> RequestPayload:
-        spoke.associated_unit_internal_id = ""
+        spoke.associated_unit_internal_id = None
         if spoke.config["developer"]["disable_barcode_validation"]:
             return {"status": True}
 
@@ -177,7 +177,7 @@ class HidEventHandler(Resource):
                 display.render_view(Alerts.OperationStartedAlert)
                 display.render_view(Views.OngoingOperationScreen)
 
-            spoke.invert_rec_flag()
+            spoke.associated_unit_internal_id = None
 
     @staticmethod
     def send_log_out_request() -> None:
@@ -189,8 +189,8 @@ class HidEventHandler(Resource):
         """log employee out"""
         try:
             if spoke.recording_in_progress:
-                HidEventHandler.end_operation(spoke.associated_unit_internal_id)
-                spoke.recording_in_progress = False
+                HidEventHandler.end_operation(str(spoke.associated_unit_internal_id))
+                spoke.associated_unit_internal_id = None
             if not spoke.config["developer"]["disable_id_validation"]:
                 self.send_log_out_request()
             worker.log_out()
