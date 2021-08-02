@@ -28,7 +28,13 @@ api = Api(app)  # create a Flask API
 
 @atexit.register  # define the behaviour when the script execution is completed
 def end_session() -> None:
-    """clear the display, release SPI and join the thread before exiting"""
+    """
+    log out the worker,
+    clear the display, release SPI and join the thread before exiting
+    """
+    if worker.is_authorized:
+        HidEventHandler.log_out()
+
     display.end_session()
 
 
@@ -134,22 +140,24 @@ class HidEventHandler(Resource):
             logging.error(f"Request to the hub failed:\n{E}")
 
     @staticmethod
-    def _handle_rfid_event(event_dict: tp.Dict[str, tp.Any]) -> None:
+    def log_out() -> None:
+        spoke.end_recording()
+
+        payload = {"workbench_no": spoke.number}
+        url = f"{spoke.hub_url}/api/employee/log-out"
+
+        try:
+            send_request_to_backend(url, payload)
+            worker.log_out()
+            display.render_view(Views.SuccessfulLogOutAlert)
+            display.render_view(Views.LoginScreen)
+        except BackendUnreachableError:
+            pass
+
+    def _handle_rfid_event(self, event_dict: tp.Dict[str, tp.Any]) -> None:
         # if worker is logged in - log him out
         if worker.is_authorized:
-            spoke.end_recording()
-
-            payload = {"workbench_no": spoke.number}
-            url = f"{spoke.hub_url}/api/employee/log-out"
-
-            try:
-                send_request_to_backend(url, payload)
-                worker.log_out()
-                display.render_view(Views.SuccessfulLogOutAlert)
-                display.render_view(Views.LoginScreen)
-            except BackendUnreachableError:
-                pass
-
+            self.log_out()
             return
 
         # perform development log in if set in config
