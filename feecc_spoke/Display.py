@@ -67,16 +67,17 @@ class Display:
         logging.info(f"Display: rendering view {self.state}")
 
         # wait for the ongoing operation to finish to avoid overwhelming the display
-        while self._display_busy:
-            # drop pending View if it is the same one
-            if self.state == previous_state:
-                logging.info(
-                    f"Pending View ({self.state}) matches the current View. View render dropped."
-                )
-                return
-
+        if self._display_busy:
             logging.debug(f"Display busy. Waiting to draw {self.state}")
-            sleep(0.5)
+            # drop pending View if it is the same one which is on the display now
+            if self.state == previous_state:
+                msg = f"Pending View ({self.state}) matches the current View. View render dropped."
+                logging.info(msg)
+                return
+            # wait before drawing otherwise
+            else:
+                while self._display_busy:
+                    sleep(0.5)
 
         self._display_thread = threading.Thread(target=self._handle_state_change)
         self._display_thread.start()  # handle the state change in a separate thread
