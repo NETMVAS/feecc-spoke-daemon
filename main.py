@@ -218,6 +218,7 @@ def reset_login() -> None:
     workbench_status: RequestPayload = requests.get(url).json()
     is_logged_in: bool = bool(workbench_status["employee_logged_in"])
     if is_logged_in:
+        logging.info("Employee is logged in on the backend at the startup moment. Logging out.")
         HidEventHandler.send_log_out_request()
 
 
