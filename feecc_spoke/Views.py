@@ -41,8 +41,6 @@ class View(ABC):
         self._height: int = self._epd.width
         self._width: int = self._epd.height
 
-        logging.debug(f"{self.name} context set as {self._display}")
-
         # fonts
         logging.debug(f"Using font {os.path.basename(FONT_PATH)}")
         self._font_s: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
@@ -279,17 +277,14 @@ class AwaitInputScreen(View):
         barcode_image = Image.open("feecc_spoke/img/barcode.png")
 
         # draw the barcode icon
-        logging.debug("Drawing the barcode icon")
         img_h, img_w = (50, 50)
         barcode_image = barcode_image.resize((img_h, img_w))
         image.paste(barcode_image, (10, 10))
 
         # draw the text
-        logging.debug("Drawing the main message")
         image_draw.text((10 + img_w + 10, 10), message, font=self._font_m, fill=0)
 
         # draw the footer
-        logging.debug("Drawing the footer")
         footer_w, _ = self._align_center(footer, font=self._font_s)
         text_position = footer_w, 10 + img_h + 10
         image_draw.text(text_position, footer, font=self._font_s, fill=0, align="center")

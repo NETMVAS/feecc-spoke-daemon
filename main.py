@@ -16,7 +16,7 @@ from feecc_spoke.Spoke import Spoke
 
 # set up logging
 log_format: str = "%(levelname)s (%(asctime)s) [%(module)s:%(funcName)s]: %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=log_format)
+logging.basicConfig(level=logging.INFO, format=log_format)
 
 # REST API endpoints
 app = Flask(__name__)  # create a Flask app
@@ -148,11 +148,11 @@ class HidEventHandler(Resource):
             # end ongoing operation if there is one
             if spoke.recording_in_progress:
                 # switch back to await screen
-                logging.debug("Recording in progress. Stopping.")
+                logging.info("Recording in progress. Stopping.")
                 display.render_view(Views.AwaitInputScreen)
             else:
                 # switch to ongoing operation screen since validation succeeded
-                logging.debug("Starting recording.")
+                logging.info("Starting recording.")
                 display.render_view(Views.OngoingOperationScreen)
 
             spoke.invert_rec_flag()
