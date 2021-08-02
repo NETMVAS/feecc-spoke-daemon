@@ -272,7 +272,7 @@ class AwaitInputScreen(View):
         message = "Сканируйте\nштрихкод"
 
         footer = f"Авторизован {self._display.associated_worker.short_name()}"
-        footer = self._ensure_fitting(footer, self._font_s, 1)
+        footer = self._ensure_fitting(footer, self._font_s, 10)
         logging.debug(f"Footer: {footer}")
 
         image_draw = ImageDraw.Draw(image)
