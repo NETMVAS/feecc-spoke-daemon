@@ -19,11 +19,12 @@ if tp.TYPE_CHECKING:
 # which can be displayed on the screen by executing
 # the display method of the View subclass object
 
-# font related constants
+# constants
 FONT_PATH: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
 SMALL_FONT_SIZE: int = 11
 MEDIUM_FONT_SIZE: int = 20
 LARGE_FONT_SIZE: int = 36
+ALERT_DISPLAY_TIME: int = 1
 
 
 class View(ABC):
@@ -159,7 +160,7 @@ class Alert(View):
 
         # display the image
         self._render_image(alert_screen)
-        sleep(2)
+        sleep(ALERT_DISPLAY_TIME)
 
 
 class FailedAuthorizationAlert(Alert):
