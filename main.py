@@ -123,13 +123,16 @@ class HidEventHandler(Resource):
 
     @staticmethod
     def start_operation(barcode_string: str) -> RequestPayload:
+        spoke.associated_unit_internal_id = barcode_string
+        if spoke.config["developer"]["disable_barcode_validation"]:
+            return {"status": True}
+
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
         payload = {
             "workbench_no": spoke.number,
             "production_stage_name": spoke.config["general"]["production_stage_name"],
             "additional_info": {},
         }
-        spoke.associated_unit_internal_id = barcode_string
 
         try:
             response_data = send_request_to_backend(url, payload)
@@ -140,9 +143,12 @@ class HidEventHandler(Resource):
 
     @staticmethod
     def end_operation(barcode_string: str) -> RequestPayload:
+        spoke.associated_unit_internal_id = ""
+        if spoke.config["developer"]["disable_barcode_validation"]:
+            return {"status": True}
+
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
         payload = {"workbench_no": spoke.number, "additional_info": {}}
-        spoke.associated_unit_internal_id = ""
 
         try:
             response_data = send_request_to_backend(url, payload)
