@@ -210,6 +210,16 @@ class ResetState(Resource):
 api.add_resource(HidEventHandler, "/api/hid_event")
 api.add_resource(ResetState, "/api/reset_state")
 
+
+def reset_login() -> None:
+    """logout the employee if he is logged in on the backend at the startup moment"""
+    url: str = f"{spoke.hub_url}/api/workbench/{spoke.number}/status"
+    workbench_status: RequestPayload = requests.get(url).json()
+    is_logged_in: bool = bool(workbench_status["employee_logged_in"])
+    if is_logged_in:
+        HidEventHandler.log_out()
+
+
 # daemon initialization
 if __name__ == "__main__":
     spoke: Spoke = Spoke()  # initialize Spoke object
@@ -218,4 +228,5 @@ if __name__ == "__main__":
     display.render_view(Views.LoginScreen)
     server_ip: str = spoke.config["api"]["server_ip"]
     server_port: int = int(spoke.config["api"]["server_port"])
+    reset_login()
     app.run(host=server_ip, port=server_port)
