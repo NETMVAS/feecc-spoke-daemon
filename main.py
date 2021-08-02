@@ -144,7 +144,7 @@ class HidEventHandler(Resource):
             logging.error(f"Request to the hub failed:\n{E}")
 
     @staticmethod
-    def log_out(cls) -> None:
+    def log_out() -> None:
         spoke.end_recording()
 
         payload = {"workbench_no": spoke.number}
