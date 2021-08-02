@@ -107,7 +107,6 @@ class HidEventHandler(Resource):
 
                 try:
                     response_data = send_request_to_backend(url, payload)
-                    display.render_view(Views.LoginScreen)
                 except BackendUnreachableError:
                     return
 
