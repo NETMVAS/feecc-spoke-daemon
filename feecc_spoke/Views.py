@@ -108,7 +108,7 @@ class View(ABC):
 
         break_pos: int = 0
         while not _is_fitting(modified_text) and break_pos < len(text.split()):
-            modified_text = _insert_break(modified_text, break_pos)
+            modified_text = _insert_break(text, break_pos)
             break_pos += 1
 
         return modified_text
