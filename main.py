@@ -32,10 +32,14 @@ def end_session() -> None:
     log out the worker,
     clear the display, release SPI and join the thread before exiting
     """
+    logging.info("SIGTERM handling started")
+
     if worker.is_authorized:
+        logging.info("Employee logged in. Logging out before exiting.")
         HidEventHandler.log_out()
 
     display.end_session()
+    logging.info("SIGTERM handling finished")
 
 
 def send_request_to_backend(url: str, payload: tp.Dict[str, tp.Any]) -> tp.Dict[str, tp.Any]:
@@ -139,8 +143,8 @@ class HidEventHandler(Resource):
         except Exception as E:
             logging.error(f"Request to the hub failed:\n{E}")
 
-    @staticmethod
-    def log_out() -> None:
+    @classmethod
+    def log_out(cls) -> None:
         spoke.end_recording()
 
         payload = {"workbench_no": spoke.number}
