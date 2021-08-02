@@ -18,7 +18,7 @@ class Spoke:
         self.associated_unit_internal_id: tp.Optional[str] = None
 
     @property
-    def recording_in_progress(self) -> bool:
+    def operation_ongoing(self) -> bool:
         return self.associated_unit_internal_id is not None
 
     @property

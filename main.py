@@ -7,7 +7,7 @@ import requests
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
 
-from Types import RequestPayload
+from Types import AddInfo, RequestPayload
 from exceptions import BackendUnreachableError
 from feecc_spoke import Alerts, ViewBase, Views
 from feecc_spoke.Display import Display
@@ -112,72 +112,63 @@ class HidEventHandler(Resource):
         self._post_barcode_handling(response_data)
 
     def _barcode_handling(self, barcode_string: str) -> RequestPayload:
-        if spoke.config["developer"]["disable_barcode_validation"]:
-            # skip barcode validation
-            return {"status": True}
-
-        if spoke.recording_in_progress:
+        if spoke.operation_ongoing:
             return self.end_operation(barcode_string)
         else:
             return self.start_operation(barcode_string)
 
     @staticmethod
-    def start_operation(barcode_string: str) -> RequestPayload:
+    def start_operation(barcode_string: str, additional_info: AddInfo = None) -> RequestPayload:
+        """send a request to start operation on the provided unit"""
         spoke.associated_unit_internal_id = barcode_string
         if spoke.config["developer"]["disable_barcode_validation"]:
             return {"status": True}
-
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
         payload = {
             "workbench_no": spoke.number,
             "production_stage_name": spoke.config["general"]["production_stage_name"],
-            "additional_info": {},
+            "additional_info": additional_info if additional_info else {},
         }
-
         try:
-            response_data = send_request_to_backend(url, payload)
+            return send_request_to_backend(url, payload)
         except BackendUnreachableError:
-            response_data = {"status": False}
-
-        return response_data
+            return {"status": False}
 
     @staticmethod
-    def end_operation(barcode_string: str) -> RequestPayload:
+    def end_operation(barcode_string: str, additional_info: AddInfo = None) -> RequestPayload:
+        """send a request to end operation on the provided unit"""
         spoke.associated_unit_internal_id = None
         if spoke.config["developer"]["disable_barcode_validation"]:
             return {"status": True}
-
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
-        payload = {"workbench_no": spoke.number, "additional_info": {}}
-
+        payload = {
+            "workbench_no": spoke.number,
+            "additional_info": additional_info if additional_info else {},
+        }
         try:
-            response_data = send_request_to_backend(url, payload)
+            return send_request_to_backend(url, payload)
         except BackendUnreachableError:
-            response_data = {"status": False}
-
-        return response_data
+            return {"status": False}
 
     @staticmethod
     def _post_barcode_handling(response_data: RequestPayload) -> None:
+        """display feedback on the performed requests"""
         if not response_data["status"]:
             logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
             display.render_view(Alerts.UnitNotFoundAlert)
             display.render_view(Views.AwaitInputScreen)
-
         else:
             # end ongoing operation if there is one
-            if spoke.recording_in_progress:
-                # switch back to await screen
-                logging.info("Recording in progress. Stopping.")
-                display.render_view(Alerts.OperationEndedAlert)
-                display.render_view(Views.AwaitInputScreen)
-            else:
+            if spoke.operation_ongoing:
                 # switch to ongoing operation screen since validation succeeded
-                logging.info("Starting recording.")
+                logging.info("Starting operation.")
                 display.render_view(Alerts.OperationStartedAlert)
                 display.render_view(Views.OngoingOperationScreen)
-
-            spoke.associated_unit_internal_id = None
+            else:
+                # switch back to await screen
+                logging.info("Operation in progress. Stopping.")
+                display.render_view(Alerts.OperationEndedAlert)
+                display.render_view(Views.AwaitInputScreen)
 
     @staticmethod
     def send_log_out_request() -> None:
@@ -188,7 +179,7 @@ class HidEventHandler(Resource):
     def log_out(self) -> None:
         """log employee out"""
         try:
-            if spoke.recording_in_progress:
+            if spoke.operation_ongoing:
                 HidEventHandler.end_operation(str(spoke.associated_unit_internal_id))
                 spoke.associated_unit_internal_id = None
             if not spoke.config["developer"]["disable_id_validation"]:
@@ -200,18 +191,20 @@ class HidEventHandler(Resource):
             pass
 
     @staticmethod
-    def log_in(event_dict: RequestPayload) -> None:
-        """log employee in"""
+    def send_log_in_request(rfid_card_no: str) -> RequestPayload:
         payload = {
             "workbench_no": spoke.number,
-            "employee_rfid_card_no": event_dict["string"],
+            "employee_rfid_card_no": rfid_card_no,
         }
         url = f"{spoke.hub_url}/api/employee/log-in"
-
         try:
-            response_data = send_request_to_backend(url, payload)
+            return send_request_to_backend(url, payload)
         except BackendUnreachableError:
-            return
+            return {"status": False}
+
+    def log_in(self, event_dict: RequestPayload) -> None:
+        """log employee in"""
+        response_data: RequestPayload = self.send_log_in_request(event_dict["string"])
 
         # check if worker authorized and log him in
         if response_data["status"]:
