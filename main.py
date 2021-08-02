@@ -9,7 +9,7 @@ from flask_restful import Api, Resource
 
 from Types import RequestPayload
 from exceptions import BackendUnreachableError
-from feecc_spoke import Views
+from feecc_spoke import Alerts, ViewBase, Views
 from feecc_spoke.Display import Display
 from feecc_spoke.Employee import Employee
 from feecc_spoke.Spoke import Spoke
@@ -46,8 +46,8 @@ def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload
     except Exception as E:
         logging.error(f"Backend unreachable: {E}")
 
-        previous_view: tp.Optional[tp.Type[Views.View]] = display.current_view
-        display.render_view(Views.BackendUnreachableAlert)
+        previous_view: tp.Optional[tp.Type[ViewBase.View]] = display.current_view
+        display.render_view(Alerts.BackendUnreachableAlert)
 
         if previous_view is not None:
             display.render_view(previous_view)
@@ -91,17 +91,17 @@ class HidEventHandler(Resource):
 
         # display corresponding messages
         if worker.is_authorized:
-            display.render_view(Views.SuccessfulAuthorizationAlert)
+            display.render_view(Alerts.SuccessfulAuthorizationAlert)
             display.render_view(Views.AwaitInputScreen)
         else:
-            display.render_view(Views.FailedAuthorizationAlert)
+            display.render_view(Alerts.FailedAuthorizationAlert)
             display.render_view(Views.LoginScreen)
 
     def _handle_barcode_event(self, event_dict: RequestPayload) -> None:
         # ignore the event if unauthorized
         if not worker.is_authorized:
             logging.info("Ignoring barcode event: worker not authorized.")
-            display.render_view(Views.AuthorizeFirstAlert)
+            display.render_view(Alerts.AuthorizeFirstAlert)
             display.render_view(Views.LoginScreen)
             return
 
@@ -141,7 +141,7 @@ class HidEventHandler(Resource):
     def _post_barcode_handling(response_data: RequestPayload) -> None:
         if not response_data["status"]:
             logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
-            display.render_view(Views.UnitNotFoundAlert)
+            display.render_view(Alerts.UnitNotFoundAlert)
             display.render_view(Views.AwaitInputScreen)
 
         else:
@@ -149,10 +149,12 @@ class HidEventHandler(Resource):
             if spoke.recording_in_progress:
                 # switch back to await screen
                 logging.info("Recording in progress. Stopping.")
+                display.render_view(Alerts.OperationEndedAlert)
                 display.render_view(Views.AwaitInputScreen)
             else:
                 # switch to ongoing operation screen since validation succeeded
                 logging.info("Starting recording.")
+                display.render_view(Alerts.OperationStartedAlert)
                 display.render_view(Views.OngoingOperationScreen)
 
             spoke.invert_rec_flag()
@@ -169,7 +171,7 @@ class HidEventHandler(Resource):
             spoke.end_recording()
             self.send_log_out_request()
             worker.log_out()
-            display.render_view(Views.SuccessfulLogOutAlert)
+            display.render_view(Alerts.SuccessfulLogOutAlert)
             display.render_view(Views.LoginScreen)
         except BackendUnreachableError:
             pass

@@ -5,7 +5,8 @@ from time import sleep, time
 
 from .Employee import Employee
 from .Spoke import Spoke
-from .Views import BlankScreen, View
+from .ViewBase import View
+from .Views import BlankScreen
 
 try:
     from .waveshare_epd import epd2in13d, epdconfig
