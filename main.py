@@ -143,7 +143,7 @@ class HidEventHandler(Resource):
         except Exception as E:
             logging.error(f"Request to the hub failed:\n{E}")
 
-    @classmethod
+    @staticmethod
     def log_out(cls) -> None:
         spoke.end_recording()
 
