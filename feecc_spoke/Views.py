@@ -86,6 +86,33 @@ class View(ABC):
         text_position = int((self._width - txt_w) / 2), int((self._height - txt_h) / 2)
         return text_position
 
+    def _ensure_fitting(self, text: str, font: FreeTypeFont, min_offset: int = 5) -> str:
+        """make sure provided text fits on the screen and add line breaks if it doesn't"""
+        modified_text: str = text
+        sample_image = self._get_image()
+        sample_draw = ImageDraw.Draw(sample_image)
+
+        def _is_fitting(message: str) -> bool:
+            txt_w, _ = sample_draw.textsize(message, font)
+            offset_w, _ = font.getoffset(message)
+            txt_w += offset_w
+            msg_w: int = txt_w + (min_offset * 2)
+            return msg_w <= self._width
+
+        def _insert_break(msg: str, break_pos_: int) -> str:
+            msg_: tp.List[str] = msg.split()
+            msg_.insert(break_pos_, "\n")
+            new_msg: str = " ".join(msg_)
+            new_msg.replace(" \n ", "\n")
+            return new_msg
+
+        break_pos: int = 0
+        while not _is_fitting(modified_text) and break_pos < len(text.split()):
+            modified_text = _insert_break(modified_text, break_pos)
+            break_pos += 1
+
+        return modified_text
+
     @property
     def _rotate(self) -> bool:
         return bool(self._display.spoke_config["screen"]["rotate_output"])
@@ -245,6 +272,7 @@ class AwaitInputScreen(View):
         message = "Сканируйте\nштрихкод"
 
         footer = f"Авторизован {self._display.associated_worker.short_name()}"
+        footer = self._ensure_fitting(footer, self._font_s, 1)
         logging.debug(f"Footer: {footer}")
 
         image_draw = ImageDraw.Draw(image)
@@ -264,7 +292,7 @@ class AwaitInputScreen(View):
         logging.debug("Drawing the footer")
         footer_w, _ = self._align_center(footer, font=self._font_s)
         text_position = footer_w, 10 + img_h + 10
-        image_draw.text(text_position, footer, font=self._font_s, fill=0)
+        image_draw.text(text_position, footer, font=self._font_s, fill=0, align="center")
 
         # draw the image
         self._render_image(image)
