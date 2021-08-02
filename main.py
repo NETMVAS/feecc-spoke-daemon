@@ -169,7 +169,8 @@ class HidEventHandler(Resource):
         """log employee out"""
         try:
             spoke.end_recording()
-            self.send_log_out_request()
+            if not spoke.config["developer"]["disable_id_validation"]:
+                self.send_log_out_request()
             worker.log_out()
             display.render_view(Alerts.SuccessfulLogOutAlert)
             display.render_view(Views.LoginScreen)

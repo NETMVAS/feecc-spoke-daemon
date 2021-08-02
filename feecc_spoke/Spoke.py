@@ -89,7 +89,6 @@ class Spoke:
             if not self.config["developer"]["disable_barcode_validation"]:
                 url = f"{self.hub_url}/api/unit/{self.associated_unit_internal_id}/end"
                 payload = {"workbench_no": self.number, "additional_info": {}}
-
                 requests.post(url=url, json=payload)
 
             self.invert_rec_flag()
