@@ -242,16 +242,25 @@ api.add_resource(ResetState, "/api/reset_state")
 
 
 def sync_login_status() -> None:
-    """log in the employee locally if he is logged in on the backend at the startup moment"""
+    """resolve conflicts in login status between backend and local data"""
     try:
+        # get data from the backend
         workbench_status: RequestPayload = spoke.workbench_status
         is_logged_in: bool = bool(workbench_status["employee_logged_in"])
-        if is_logged_in:
-            logging.info(
-                "Employee is logged in on the backend at the startup moment. Logging in locally."
-            )
+
+        # identify conflicts and treat accordingly
+        if is_logged_in == worker.is_authorized:
+            logging.debug("local and global login statuses match. no discrepancy found.")
+        elif is_logged_in and not worker.is_authorized:
+            logging.info("Employee is logged in on the backend. Logging in locally.")
             employee_data: tp.Dict[str, str] = workbench_status["employee"]
             worker.log_in(employee_data["position"], employee_data["name"], "")
+        elif not is_logged_in and worker.is_authorized:
+            logging.info("Employee is logged out on the backend. Logging out locally.")
+            worker.log_out()
+
+        # display feedback accordingly
+        if is_logged_in:
             display.render_view(Alerts.SuccessfulAuthorizationAlert)
             display.render_view(Views.AwaitInputScreen)
         else:
