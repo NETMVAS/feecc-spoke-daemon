@@ -185,7 +185,7 @@ class HidEventHandler(Resource):
             if not spoke.config["developer"]["disable_id_validation"]:
                 self.send_log_out_request()
 
-            if worker.rfid_card_id == rfid_card_id:
+            if worker.rfid_card_id == rfid_card_id or not worker.rfid_card_id:
                 worker.log_out()
                 display.render_view(Alerts.SuccessfulLogOutAlert)
                 display.render_view(Views.LoginScreen)
@@ -237,17 +237,23 @@ api.add_resource(HidEventHandler, "/api/hid_event")
 api.add_resource(ResetState, "/api/reset_state")
 
 
-def reset_login() -> None:
-    """logout the employee if he is logged in on the backend at the startup moment"""
+def sync_login_status() -> None:
+    """log in the employee locally if he is logged in on the backend at the startup moment"""
     try:
         url: str = f"{spoke.hub_url}/api/workbench/{spoke.number}/status"
         workbench_status: RequestPayload = requests.get(url).json()
         is_logged_in: bool = bool(workbench_status["employee_logged_in"])
         if is_logged_in:
-            logging.info("Employee is logged in on the backend at the startup moment. Logging out.")
-            HidEventHandler.send_log_out_request()
+            logging.info(
+                "Employee is logged in on the backend at the startup moment. Logging in locally."
+            )
+            employee_data: tp.Dict[str, str] = workbench_status["employee"]
+            worker.log_in(employee_data["position"], employee_data["name"], "")
+            display.render_view(Alerts.SuccessfulAuthorizationAlert)
+            display.render_view(Views.AwaitInputScreen)
+
     except Exception as e:
-        logging.error(f"Login reset failed: {e}")
+        logging.error(f"Login sync failed: {e}")
 
 
 # daemon initialization
@@ -258,5 +264,5 @@ if __name__ == "__main__":
     display.render_view(Views.LoginScreen)
     server_ip: str = spoke.config["api"]["server_ip"]
     server_port: int = int(spoke.config["api"]["server_port"])
-    reset_login()
+    sync_login_status()
     app.run(host=server_ip, port=server_port)
