@@ -5,9 +5,10 @@ import subprocess
 import sys
 import typing as tp
 
+import requests
 import yaml
 
-from Types import Config
+from Types import Config, RequestPayload
 
 
 class Spoke:
@@ -38,6 +39,12 @@ class Spoke:
         output: str = subprocess.check_output(command, shell=True, text=True)
         ip_addresses: tp.List[str] = re.findall("192.168.\d+.\d+", output)
         return ip_addresses[0] if ip_addresses else None
+
+    @property
+    def workbench_status(self) -> RequestPayload:
+        url: str = f"{self.hub_url}/api/workbench/{self.number}/status"
+        workbench_status: RequestPayload = requests.get(url).json()
+        return workbench_status
 
     @staticmethod
     def _get_config(config_path: str = "config.yaml") -> Config:

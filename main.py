@@ -76,6 +76,10 @@ class HidEventHandler(Resource):
             )
 
     def _handle_rfid_event(self, event_dict: RequestPayload) -> None:
+        # resolve sync conflicts
+        if not worker.is_authorized == spoke.workbench_status["employee_logged_in"]:
+            sync_login_status()
+
         # if worker is logged in - log him out
         if worker.is_authorized:
             self.log_out(event_dict["string"])
@@ -240,8 +244,7 @@ api.add_resource(ResetState, "/api/reset_state")
 def sync_login_status() -> None:
     """log in the employee locally if he is logged in on the backend at the startup moment"""
     try:
-        url: str = f"{spoke.hub_url}/api/workbench/{spoke.number}/status"
-        workbench_status: RequestPayload = requests.get(url).json()
+        workbench_status: RequestPayload = spoke.workbench_status
         is_logged_in: bool = bool(workbench_status["employee_logged_in"])
         if is_logged_in:
             logging.info(
