@@ -77,6 +77,15 @@ class AuthorizeFirstAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
+class IdMismatchAlert(Alert):
+    """display a message about mismatched id (forbidden log out operation)"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.cross
+        alert_message: str = "Авторизован\nдругой\nсотрудник"
+        super().__init__(context, image_path, alert_message)
+
+
 class BackendUnreachableAlert(Alert):
     """display a message about broken backend connectivity"""
 

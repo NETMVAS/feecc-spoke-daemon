@@ -31,7 +31,7 @@ def end_session() -> None:
     logging.info("SIGTERM handling started")
     if worker.is_authorized:
         logging.info("Employee logged in. Logging out before exiting.")
-        HidEventHandler().log_out()
+        HidEventHandler().log_out(worker.rfid_card_id)
     display.end_session()
     logging.info("SIGTERM handling finished")
 
@@ -78,13 +78,13 @@ class HidEventHandler(Resource):
     def _handle_rfid_event(self, event_dict: RequestPayload) -> None:
         # if worker is logged in - log him out
         if worker.is_authorized:
-            self.log_out()
+            self.log_out(event_dict["string"])
             return
 
         # perform development log in if set in config
         if spoke.config["developer"]["disable_id_validation"]:
             logging.info("Employee authorized regardless of the ID card: development auth is on.")
-            worker.log_in("Младший инженер", "Иванов Иван Иванович")
+            worker.log_in("Младший инженер", "Иванов Иван Иванович", "000000000000000000")
         else:
             # make a call to authorize the worker otherwise
             self.log_in(event_dict)
@@ -176,7 +176,7 @@ class HidEventHandler(Resource):
         url = f"{spoke.hub_url}/api/employee/log-out"
         send_request_to_backend(url, payload)
 
-    def log_out(self) -> None:
+    def log_out(self, rfid_card_id: str) -> None:
         """log employee out"""
         try:
             if spoke.operation_ongoing:
@@ -184,9 +184,15 @@ class HidEventHandler(Resource):
                 spoke.associated_unit_internal_id = None
             if not spoke.config["developer"]["disable_id_validation"]:
                 self.send_log_out_request()
-            worker.log_out()
-            display.render_view(Alerts.SuccessfulLogOutAlert)
-            display.render_view(Views.LoginScreen)
+
+            if worker.rfid_card_id == rfid_card_id:
+                worker.log_out()
+                display.render_view(Alerts.SuccessfulLogOutAlert)
+                display.render_view(Views.LoginScreen)
+            else:
+                display.render_view(Alerts.IdMismatchAlert)
+                display.render_view(Views.AwaitInputScreen)
+
         except BackendUnreachableError:
             pass
 
@@ -204,13 +210,14 @@ class HidEventHandler(Resource):
 
     def log_in(self, event_dict: RequestPayload) -> None:
         """log employee in"""
-        response_data: RequestPayload = self.send_log_in_request(event_dict["string"])
+        rfid_card_id: str = str(event_dict["string"])
+        response_data: RequestPayload = self.send_log_in_request(rfid_card_id)
 
         # check if worker authorized and log him in
         if response_data["status"]:
             name = response_data["employee_data"]["name"]
             position = response_data["employee_data"]["position"]
-            worker.log_in(position, name)
+            worker.log_in(position, name, rfid_card_id)
         else:
             logging.error("Employee could not be authorized: hub rejected ID card")
 

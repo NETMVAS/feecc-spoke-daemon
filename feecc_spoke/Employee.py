@@ -10,6 +10,7 @@ class Employee:
     is_authorized: bool = False
     full_name: str = ""
     position: str = ""
+    rfid_card_id: str = ""
 
     @property
     def short_name(self) -> str:
@@ -26,13 +27,14 @@ class Employee:
                 short_name.append(part)
             return " ".join(short_name)
         except Exception as E:
-            logging.error(f"Short name generation failed for the full name '{full_name}'. E: {E}")
+            logging.debug(f"Short name generation failed for the full name '{full_name}'. E: {E}")
             return full_name
 
-    def log_in(self, position: str, full_name: str) -> None:
+    def log_in(self, position: str, full_name: str, card_id: str) -> None:
         """end working session and log out the worker"""
         self.full_name = full_name
         self.position = position
+        self.rfid_card_id = card_id
         self.is_authorized = True
         logging.info(f"{self.position} {self.short_name} logged in")
 
