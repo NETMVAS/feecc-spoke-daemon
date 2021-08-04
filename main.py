@@ -251,6 +251,8 @@ def sync_login_status() -> None:
             worker.log_in(employee_data["position"], employee_data["name"], "")
             display.render_view(Alerts.SuccessfulAuthorizationAlert)
             display.render_view(Views.AwaitInputScreen)
+        else:
+            display.render_view(Views.LoginScreen)
 
     except Exception as e:
         logging.error(f"Login sync failed: {e}")
@@ -261,7 +263,6 @@ if __name__ == "__main__":
     spoke: Spoke = Spoke()  # initialize Spoke object
     worker: Employee = Employee()  # create Employee object
     display: Display = Display(worker, spoke)  # instantiate Display
-    display.render_view(Views.LoginScreen)
     server_ip: str = spoke.config["api"]["server_ip"]
     server_port: int = int(spoke.config["api"]["server_port"])
     sync_login_status()
