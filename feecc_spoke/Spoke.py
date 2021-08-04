@@ -8,6 +8,7 @@ import typing as tp
 import requests
 import yaml
 
+from exceptions import BackendUnreachableError
 from Types import Config, RequestPayload
 
 
@@ -43,8 +44,12 @@ class Spoke:
     @property
     def workbench_status(self) -> RequestPayload:
         url: str = f"{self.hub_url}/api/workbench/{self.number}/status"
-        workbench_status: RequestPayload = requests.get(url).json()
-        return workbench_status
+        try:
+            workbench_status: RequestPayload = requests.get(url).json()
+            return workbench_status
+        except Exception as E:
+            logging.error(f"Backend unreachable: {E}")
+            raise BackendUnreachableError
 
     @staticmethod
     def _get_config(config_path: str = "config.yaml") -> Config:

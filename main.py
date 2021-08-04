@@ -241,7 +241,7 @@ api.add_resource(HidEventHandler, "/api/hid_event")
 api.add_resource(ResetState, "/api/reset_state")
 
 
-def sync_login_status() -> None:
+def sync_login_status(no_feedback: bool = False) -> None:
     """resolve conflicts in login status between backend and local data"""
     try:
         # get data from the backend
@@ -258,16 +258,19 @@ def sync_login_status() -> None:
         elif not is_logged_in and worker.is_authorized:
             logging.info("Employee is logged out on the backend. Logging out locally.")
             worker.log_out()
-
-        # display feedback accordingly
-        if is_logged_in:
-            display.render_view(Alerts.SuccessfulAuthorizationAlert)
-            display.render_view(Views.AwaitInputScreen)
-        else:
-            display.render_view(Views.LoginScreen)
-
+    except BackendUnreachableError:
+        pass
     except Exception as e:
         logging.error(f"Login sync failed: {e}")
+
+    # display feedback accordingly
+    if no_feedback:
+        pass
+    elif worker.is_authorized:
+        display.render_view(Alerts.SuccessfulAuthorizationAlert)
+        display.render_view(Views.AwaitInputScreen)
+    else:
+        display.render_view(Views.LoginScreen)
 
 
 # daemon initialization
