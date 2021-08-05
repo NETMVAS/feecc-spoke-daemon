@@ -36,7 +36,7 @@ def generic_hid_event(sender: str, payload: str) -> None:
 
 if __name__ == "__main__":
     options: str = """
-    Emulator options (entered as CLI argument or at input"):
+    Emulator options (entered as CLI argument or at input):
     [ 0 ] - valid RFID event
     [ 1 ] - junk RFID event
     [ 2 ] - valid barcode event

@@ -77,8 +77,12 @@ class HidEventHandler(Resource):
 
     def _handle_rfid_event(self, event_dict: RequestPayload) -> None:
         # resolve sync conflicts
-        if not worker.is_authorized == spoke.workbench_status["employee_logged_in"]:
-            sync_login_status()
+        try:
+            workbench_status: RequestPayload = spoke.workbench_status
+            if not worker.is_authorized == workbench_status["employee_logged_in"]:
+                sync_login_status()
+        except BackendUnreachableError:
+            pass
 
         # if worker is logged in - log him out
         if worker.is_authorized:
