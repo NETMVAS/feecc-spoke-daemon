@@ -644,10 +644,11 @@ class EPD:
         if Image == None:
             return
 
-        self.send_command(0x10)
-        for i in range(0, int(self.width * self.height / 8)):
-            self.send_data(0x00)
-        epdconfig.delay_ms(10)
+        # fill with black?
+        # self.send_command(0x10)
+        # for i in range(0, int(self.width * self.height / 8)):
+        #     self.send_data(0x00)
+        # epdconfig.delay_ms(10)
 
         self.send_command(0x13)
         for i in range(0, int(self.width * self.height / 8)):

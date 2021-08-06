@@ -5,7 +5,7 @@ import os
 import typing as tp
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
-from time import sleep
+from time import sleep, time
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -57,23 +57,28 @@ class View(ABC):
 
     def _save_image(self, image: Image) -> None:
         """saves image if specified in the config"""
-        if self._display.spoke_config["developer"]["render_images"]:
-            if not os.path.isdir("img"):
-                os.mkdir("img")
+        if not os.path.isdir("img"):
+            os.mkdir("img")
 
-            image_name = f"{IMAGE_DIRECTORY_PATH}/{self.name}-{str(dt.now()).split('.')[0]}.png"
-            image.save(image_name)
-            logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
+        image_name = f"{IMAGE_DIRECTORY_PATH}/{self.name}-{str(dt.now()).split('.')[0]}.png"
+        image.save(image_name)
+        logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
 
     def _render_image(self, image: Image) -> None:
         """display the provided image and save it if needed"""
-        self._save_image(image)
+        start_time: float = time()
+
+        if self._display.spoke_config["developer"]["render_images"]:
+            self._save_image(image)
 
         if self._rotate:
             image = image.rotate(180)
 
         logging.info(f"Rendering {self.name} view on the screen")
         self._epd.display(self._epd.getbuffer(image))
+
+        end_time: float = time()
+        logging.debug(f"Image rendering took {end_time - start_time} s.")
 
     def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
         """get the coordinates of the upper left corner for the centered text"""

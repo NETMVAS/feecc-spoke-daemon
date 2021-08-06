@@ -16,7 +16,7 @@ from feecc_spoke.Spoke import Spoke
 
 # set up logging
 log_format: str = "%(levelname)s (%(asctime)s) [%(module)s:%(funcName)s]: %(message)s"
-logging.basicConfig(level=logging.INFO, format=log_format)
+logging.basicConfig(level=logging.DEBUG, format=log_format)
 
 # REST API endpoints
 app = Flask(__name__)  # create a Flask app
