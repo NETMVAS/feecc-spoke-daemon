@@ -46,7 +46,9 @@ def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload
     except Exception as E:
         logging.error(f"Backend unreachable: {E}")
 
-        previous_view: tp.Optional[tp.Type[ViewBase.View]] = display.current_view
+        previous_view: tp.Optional[tp.Type[ViewBase.View]] = (
+            display.current_view.__class__ if display.current_view is not None else None
+        )
         display.render_view(Alerts.BackendUnreachableAlert)
 
         if previous_view is not None:

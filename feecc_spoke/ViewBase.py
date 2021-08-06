@@ -78,7 +78,7 @@ class View(ABC):
         self._epd.display(self._epd.getbuffer(image))
 
         end_time: float = time()
-        logging.debug(f"Image rendering took {end_time - start_time} s.")
+        logging.debug(f"Image rendering took {round(end_time-start_time, 3)} s.")
 
     def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
         """get the coordinates of the upper left corner for the centered text"""
