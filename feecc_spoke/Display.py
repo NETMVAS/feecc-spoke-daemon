@@ -58,8 +58,16 @@ class Display:
         # drop render task if in headless mode
         if self._headless_mode:
             return
-        # put the view into queue for rendering
-        self._view_queue.append(view)
+        # put the view into queue for rendering if it it is not duplicate
+        if self._view_queue and self._view_queue[-1] == view:
+            logging.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
+            return
+        elif self.current_view.__class__ == view:
+            logging.debug(f"View {view.__name__} is currently on the display. Dropping task.")
+            return
+        else:
+            logging.debug(f"View {view.__name__} staged for rendering")
+            self._view_queue.append(view)
         # only start a new thread if there's no ongoing rendering process
         if not self._display_busy:
             self._display_thread = Thread(target=self._render_view_queue)
