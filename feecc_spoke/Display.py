@@ -1,6 +1,6 @@
 import logging
-import threading
 import typing as tp
+from threading import Thread
 from time import time
 
 from Types import Config
@@ -32,7 +32,7 @@ class Display:
 
         self.current_view: tp.Optional[View] = None
         self._view_queue: tp.List[tp.Type[View]] = []
-        self._display_thread: tp.Optional[threading.Thread] = None
+        self._display_thread: tp.Optional[Thread] = None
 
         # clear the screen at the first start in case it has leftover images on it
         self.render_view(BlankScreen)
@@ -62,8 +62,9 @@ class Display:
         self._view_queue.append(view)
         # only start a new thread if there's no ongoing rendering process
         if not self._display_busy:
-            self._display_thread = threading.Thread(target=self._render_view_queue)
+            self._display_thread = Thread(target=self._render_view_queue)
             self._display_thread.start()
+            logging.debug(f"New queue rendering thread started: {repr(self._display_thread)}")
 
     def _render_view_queue(self) -> None:
         """render all pending views one by one"""
