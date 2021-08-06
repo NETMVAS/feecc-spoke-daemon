@@ -39,7 +39,7 @@ def end_session() -> None:
 def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload:
     """try sending request, display error message on failure"""
     try:
-        response = requests.post(url=url, json=payload)
+        response = requests.post(url=url, json=payload, timeout=3)
         response_data = response.json()
         return dict(response_data)
 
