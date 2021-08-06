@@ -45,7 +45,7 @@ class Spoke:
     def workbench_status(self) -> RequestPayload:
         url: str = f"{self.hub_url}/api/workbench/{self.number}/status"
         try:
-            workbench_status: RequestPayload = requests.get(url).json()
+            workbench_status: RequestPayload = requests.get(url, timeout=1).json()
             return workbench_status
         except Exception as E:
             logging.error(f"Backend unreachable: {E}")

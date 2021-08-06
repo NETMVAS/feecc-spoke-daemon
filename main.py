@@ -39,7 +39,7 @@ def end_session() -> None:
 def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload:
     """try sending request, display error message on failure"""
     try:
-        response = requests.post(url=url, json=payload, timeout=3)
+        response = requests.post(url=url, json=payload, timeout=1)
         response_data = response.json()
         return dict(response_data)
 
@@ -284,5 +284,7 @@ if __name__ == "__main__":
     display: Display = Display(worker, spoke)  # instantiate Display
     server_ip: str = spoke.config["api"]["server_ip"]
     server_port: int = int(spoke.config["api"]["server_port"])
+    logging.info("Syncing login status")
     sync_login_status()
+    logging.info("Starting server")
     app.run(host=server_ip, port=server_port)
