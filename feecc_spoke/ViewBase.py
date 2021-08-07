@@ -179,8 +179,9 @@ class Alert(View):
             logging.debug(f"Alert footer: {footer} ({lines} lines)")
             footer_w, _ = self._align_center(footer, font=font)
             _, footer_h = alert_draw.textsize(message, font)
-            _, offset_h = font.getoffset(message)
-            footer_h += offset_h
+            if lines > 1:
+                _, offset_h = font.getoffset(message)
+                footer_h += offset_h
             footer_position = footer_w, self._height - footer_h
             alert_draw.text(footer_position, footer, font=font, fill=MAIN_COLOR, align="center")
 
