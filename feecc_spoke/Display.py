@@ -62,7 +62,7 @@ class Display:
         if self._view_queue and self._view_queue[-1] == view:
             logging.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
             return
-        elif self.current_view.__class__ == view:
+        elif self.current_view.__class__ == view and not self._view_queue:
             logging.debug(f"View {view.__name__} is currently on the display. Dropping task.")
             return
         else:
