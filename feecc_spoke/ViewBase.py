@@ -175,11 +175,12 @@ class Alert(View):
         if self._footer is not None:
             font = self._font_s
             footer = self._ensure_fitting(self._footer, font, 10)
+            logging.debug(f"Alert footer: {footer}")
             footer_w, _ = self._align_center(footer, font=font)
             _, footer_h = alert_draw.textsize(message, font)
             _, offset_h = font.getoffset(message)
             footer_h += offset_h
-            footer_position = footer_w, self._height - footer_h - 10
+            footer_position = footer_w, self._height - footer_h
             alert_draw.text(footer_position, footer, font=font, fill=MAIN_COLOR, align="center")
 
         # display the image
