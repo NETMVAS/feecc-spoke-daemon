@@ -51,6 +51,14 @@ class Spoke:
             logging.error(f"Backend unreachable: {E}")
             raise BackendUnreachableError
 
+    @property
+    def disable_id_validation(self) -> bool:
+        return bool(self.config["developer"]["disable_id_validation"])
+
+    @property
+    def disable_barcode_validation(self) -> bool:
+        return bool(self.config["developer"]["disable_barcode_validation"])
+
     @staticmethod
     def _get_config(config_path: str = "config.yaml") -> Config:
         """load up config file"""

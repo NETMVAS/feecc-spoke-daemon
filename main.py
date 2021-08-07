@@ -92,7 +92,7 @@ class HidEventHandler(Resource):
             return
 
         # perform development log in if set in config
-        if spoke.config["developer"]["disable_id_validation"]:
+        if spoke.disable_id_validation:
             logging.info("Employee authorized regardless of the ID card: development auth is on.")
             worker.log_in("Младший инженер", "Иванов Иван Иванович", "000000000000000000")
         else:
@@ -131,7 +131,7 @@ class HidEventHandler(Resource):
     def start_operation(barcode_string: str, additional_info: AddInfo = None) -> RequestPayload:
         """send a request to start operation on the provided unit"""
         spoke.associated_unit_internal_id = barcode_string
-        if spoke.config["developer"]["disable_barcode_validation"]:
+        if spoke.disable_barcode_validation:
             return {"status": True}
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/start"
         payload = {
@@ -148,7 +148,7 @@ class HidEventHandler(Resource):
     def end_operation(barcode_string: str, additional_info: AddInfo = None) -> RequestPayload:
         """send a request to end operation on the provided unit"""
         spoke.associated_unit_internal_id = None
-        if spoke.config["developer"]["disable_barcode_validation"]:
+        if spoke.disable_barcode_validation:
             return {"status": True}
         url = f"{spoke.hub_url}/api/unit/{barcode_string}/end"
         payload = {
@@ -192,10 +192,16 @@ class HidEventHandler(Resource):
             if spoke.operation_ongoing:
                 HidEventHandler.end_operation(str(spoke.associated_unit_internal_id))
                 spoke.associated_unit_internal_id = None
-            if not spoke.config["developer"]["disable_id_validation"]:
+            if not spoke.disable_id_validation:
                 self.send_log_out_request()
 
-            if worker.rfid_card_id == rfid_card_id or not worker.rfid_card_id:
+            if any(
+                (
+                    worker.rfid_card_id == rfid_card_id,
+                    not worker.rfid_card_id,
+                    spoke.disable_id_validation,
+                )
+            ):
                 worker.log_out()
                 display.render_view(Alerts.SuccessfulLogOutAlert)
                 display.render_view(Views.LoginScreen)
