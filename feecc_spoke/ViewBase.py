@@ -145,14 +145,14 @@ class Alert(View):
         alert_message: str,
         footer: tp.Optional[str] = None,
         font: tp.Optional[FreeTypeFont] = None,
-        onscreen_time: int = ALERT_DISPLAY_TIME,
+        onscreen_time: tp.Optional[int] = None,
     ) -> None:
         super().__init__(context)
         self._image_path: str = image_path
         self._message: str = alert_message
-        self._footer: tp.Optional[str] = footer
-        self._font: FreeTypeFont = font if font else self._font_m
-        self._onscreen_time: int = onscreen_time
+        self._footer: tp.Optional[str] = footer or None
+        self._font: FreeTypeFont = font or self._font_m
+        self._onscreen_time: int = onscreen_time or ALERT_DISPLAY_TIME
 
     def display(self) -> None:
         # init image

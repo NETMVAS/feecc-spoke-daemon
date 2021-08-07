@@ -83,7 +83,7 @@ class ScanBarcodeAlert(Alert):
     def __init__(self, context: Display) -> None:
         image_path: str = Icon.barcode_scanner
         alert_message: str = "Сканируйте\nштрихкод"
-        footer: str = f"Авторизован {self._display.associated_worker.short_name}"
+        footer: str = f"Авторизован {context.associated_worker.short_name}"
         super().__init__(context, image_path, alert_message, footer=footer, onscreen_time=0)
 
 
