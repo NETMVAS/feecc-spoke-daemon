@@ -175,7 +175,8 @@ class Alert(View):
         if self._footer is not None:
             font = self._font_s
             footer = self._ensure_fitting(self._footer, font, 10)
-            logging.debug(f"Alert footer: {footer}")
+            lines: int = footer.count('\n') + 1
+            logging.debug(f"Alert footer: {footer} ({lines} lines)")
             footer_w, _ = self._align_center(footer, font=font)
             _, footer_h = alert_draw.textsize(message, font)
             _, offset_h = font.getoffset(message)
