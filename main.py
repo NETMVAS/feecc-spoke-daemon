@@ -102,7 +102,7 @@ class HidEventHandler(Resource):
         # display corresponding messages
         if worker.is_authorized:
             display.render_view(Alerts.SuccessfulAuthorizationAlert)
-            display.render_view(Views.AwaitInputScreen)
+            display.render_view(Alerts.ScanBarcodeAlert)
         else:
             display.render_view(Alerts.FailedAuthorizationAlert)
             display.render_view(Views.LoginScreen)
@@ -166,7 +166,7 @@ class HidEventHandler(Resource):
         if not response_data["status"]:
             logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
             display.render_view(Alerts.UnitNotFoundAlert)
-            display.render_view(Views.AwaitInputScreen)
+            display.render_view(Alerts.ScanBarcodeAlert)
         else:
             # end ongoing operation if there is one
             if spoke.operation_ongoing:
@@ -178,7 +178,7 @@ class HidEventHandler(Resource):
                 # switch back to await screen
                 logging.info("Operation in progress. Stopping.")
                 display.render_view(Alerts.OperationEndedAlert)
-                display.render_view(Views.AwaitInputScreen)
+                display.render_view(Alerts.ScanBarcodeAlert)
 
     @staticmethod
     def send_log_out_request() -> None:
@@ -201,7 +201,7 @@ class HidEventHandler(Resource):
                 display.render_view(Views.LoginScreen)
             else:
                 display.render_view(Alerts.IdMismatchAlert)
-                display.render_view(Views.AwaitInputScreen)
+                display.render_view(Alerts.ScanBarcodeAlert)
 
         except BackendUnreachableError:
             pass
@@ -274,7 +274,7 @@ def sync_login_status(no_feedback: bool = False) -> None:
         pass
     elif worker.is_authorized:
         display.render_view(Alerts.SuccessfulAuthorizationAlert)
-        display.render_view(Views.AwaitInputScreen)
+        display.render_view(Alerts.ScanBarcodeAlert)
     else:
         display.render_view(Views.LoginScreen)
 

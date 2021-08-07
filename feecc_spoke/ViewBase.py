@@ -114,10 +114,10 @@ class View(ABC):
             new_msg.replace(" \n ", "\n")
             return new_msg
 
-        break_pos: int = 0
-        while not _is_fitting(modified_text) and break_pos < len(text.split()):
+        break_pos: int = len(text.split()) - 1
+        while not _is_fitting(modified_text) and break_pos >= 0:
             modified_text = _insert_break(text, break_pos)
-            break_pos += 1
+            break_pos -= 1
 
         return modified_text
 
@@ -143,12 +143,16 @@ class Alert(View):
         context: Display,
         image_path: str,
         alert_message: str,
+        footer: tp.Optional[str] = None,
         font: tp.Optional[FreeTypeFont] = None,
+        onscreen_time: int = ALERT_DISPLAY_TIME,
     ) -> None:
         super().__init__(context)
         self._image_path: str = image_path
         self._message: str = alert_message
+        self._footer: tp.Optional[str] = footer
         self._font: FreeTypeFont = font if font else self._font_m
+        self._onscreen_time: int = onscreen_time
 
     def display(self) -> None:
         # init image
@@ -167,9 +171,20 @@ class Alert(View):
         text_position = 20 + img_w + 10, txt_h
         alert_draw.text(text_position, message, font=self._font, fill=MAIN_COLOR, align="center")
 
+        # draw the footer
+        if self._footer is not None:
+            font = self._font_s
+            footer = self._ensure_fitting(self._footer, font, 10)
+            footer_w, _ = self._align_center(footer, font=font)
+            _, footer_h = alert_draw.textsize(message, font)
+            _, offset_h = font.getoffset(message)
+            footer_h += offset_h
+            footer_position = footer_w, self._height - footer_h - 10
+            alert_draw.text(footer_position, footer, font=font, fill=MAIN_COLOR, align="center")
+
         # display the image
         self._render_image(alert_screen)
-        sleep(ALERT_DISPLAY_TIME)
+        sleep(self._onscreen_time)
 
 
 @dataclass(frozen=True)

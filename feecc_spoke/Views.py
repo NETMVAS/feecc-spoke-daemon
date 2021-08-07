@@ -49,39 +49,6 @@ class LoginScreen(View):
         self._render_image(login_screen)
 
 
-class AwaitInputScreen(View):
-    """displays the barcode scan prompt"""
-
-    def display(self) -> None:
-        logging.info("Display barcode scan prompt")
-
-        image = self._get_image()
-        message = "Сканируйте\nштрихкод"
-
-        footer = f"Авторизован {self._display.associated_worker.short_name}"
-        footer = self._ensure_fitting(footer, self._font_s, 10)
-        logging.debug(f"Footer: {footer}")
-
-        image_draw = ImageDraw.Draw(image)
-        barcode_image = Image.open(Icon.barcode_scanner)
-
-        # draw the barcode icon
-        img_h, img_w = (50, 50)
-        barcode_image = barcode_image.resize((img_h, img_w))
-        image.paste(barcode_image, (10, 10))
-
-        # draw the text
-        image_draw.text((10 + img_w + 10, 10), message, font=self._font_m, fill=MAIN_COLOR)
-
-        # draw the footer
-        footer_w, _ = self._align_center(footer, font=self._font_s)
-        text_position = footer_w, 10 + img_h + 10
-        image_draw.text(text_position, footer, font=self._font_s, fill=MAIN_COLOR, align="center")
-
-        # draw the image
-        self._render_image(image)
-
-
 class OngoingOperationScreen(View):
     """Displays the assembly timer"""
 

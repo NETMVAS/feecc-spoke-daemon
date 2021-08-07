@@ -65,7 +65,7 @@ class SuccessfulAuthorizationAlert(Alert):
         worker_short_name: str = context.associated_worker.short_name
         alert_message: str = f"Авторизован\n{worker_position}\n{worker_short_name}"
         font: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
-        super().__init__(context, image_path, alert_message, font)
+        super().__init__(context, image_path, alert_message, font=font)
 
 
 class AuthorizeFirstAlert(Alert):
@@ -75,6 +75,16 @@ class AuthorizeFirstAlert(Alert):
         image_path: str = Icon.cross
         alert_message: str = "Необходима\nавторизация"
         super().__init__(context, image_path, alert_message)
+
+
+class ScanBarcodeAlert(Alert):
+    """displays the barcode scan prompt"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.barcode_scanner
+        alert_message: str = "Сканируйте\nштрихкод"
+        footer: str = f"Авторизован {self._display.associated_worker.short_name}"
+        super().__init__(context, image_path, alert_message, footer=footer, onscreen_time=0)
 
 
 class IdMismatchAlert(Alert):
