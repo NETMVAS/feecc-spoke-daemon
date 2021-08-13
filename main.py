@@ -1,22 +1,22 @@
 import atexit
 import json
-import logging
 import typing as tp
 
 import requests
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
+from loguru import logger
 
-from Types import AddInfo, RequestPayload
+from _logging import CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG
 from exceptions import BackendUnreachableError
 from feecc_spoke import Alerts, ViewBase, Views
 from feecc_spoke.Display import Display
 from feecc_spoke.Employee import Employee
 from feecc_spoke.Spoke import Spoke
+from Types import AddInfo, RequestPayload
 
-# set up logging
-log_format: str = "%(levelname)s (%(asctime)s) [%(module)s:%(funcName)s]: %(message)s"
-logging.basicConfig(level=logging.DEBUG, format=log_format)
+# apply logging configuration
+logger.configure(handlers=[CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG])
 
 # REST API endpoints
 app = Flask(__name__)  # create a Flask app
@@ -28,12 +28,12 @@ def end_session() -> None:
     """
     log out the worker, clear the display, release SPI and join the thread before exiting
     """
-    logging.info("SIGTERM handling started")
+    logger.info("SIGTERM handling started")
     if worker.is_authorized:
-        logging.info("Employee logged in. Logging out before exiting.")
+        logger.info("Employee logged in. Logging out before exiting.")
         HidEventHandler().log_out(worker.rfid_card_id)
     display.end_session()
-    logging.info("SIGTERM handling finished")
+    logger.info("SIGTERM handling finished")
 
 
 def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload:
@@ -44,7 +44,7 @@ def send_request_to_backend(url: str, payload: RequestPayload) -> RequestPayload
         return dict(response_data)
 
     except Exception as E:
-        logging.error(f"Backend unreachable: {E}")
+        logger.error(f"Backend unreachable: {E}")
 
         previous_view: tp.Optional[tp.Type[ViewBase.View]] = (
             display.current_view.__class__ if display.current_view is not None else None
@@ -63,7 +63,7 @@ class HidEventHandler(Resource):
     def post(self) -> None:
         # parse the event dict JSON
         event_dict: RequestPayload = request.get_json()  # type: ignore
-        logging.debug(f"Received event dict:\n{event_dict}")
+        logger.debug(f"Received event dict:\n{event_dict}")
 
         # handle the event in accord with it's source
         sender = spoke.identify_sender(event_dict["name"])
@@ -73,7 +73,7 @@ class HidEventHandler(Resource):
         elif sender == "barcode_reader":
             self._handle_barcode_event(event_dict)
         else:
-            logging.error(
+            logger.error(
                 "Sender of the event dict is not mentioned in the config. Can't handle the request."
             )
 
@@ -93,7 +93,7 @@ class HidEventHandler(Resource):
 
         # perform development log in if set in config
         if spoke.disable_id_validation:
-            logging.info("Employee authorized regardless of the ID card: development auth is on.")
+            logger.info("Employee authorized regardless of the ID card: development auth is on.")
             worker.log_in("Младший инженер", "Иванов Иван Иванович", "000000000000000000")
         else:
             # make a call to authorize the worker otherwise
@@ -110,14 +110,14 @@ class HidEventHandler(Resource):
     def _handle_barcode_event(self, event_dict: RequestPayload) -> None:
         # ignore the event if unauthorized
         if not worker.is_authorized:
-            logging.info("Ignoring barcode event: worker not authorized.")
+            logger.info("Ignoring barcode event: worker not authorized.")
             display.render_view(Alerts.AuthorizeFirstAlert)
             display.render_view(Views.LoginScreen)
             return
 
         # make a request to the hub regarding the barcode
         barcode_string = event_dict["string"]
-        logging.info(f"Making a request to hub regarding the barcode {barcode_string}")
+        logger.info(f"Making a request to hub regarding the barcode {barcode_string}")
         response_data: RequestPayload = self._barcode_handling(barcode_string)
         self._post_barcode_handling(response_data)
 
@@ -164,19 +164,19 @@ class HidEventHandler(Resource):
     def _post_barcode_handling(response_data: RequestPayload) -> None:
         """display feedback on the performed requests"""
         if not response_data["status"]:
-            logging.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
+            logger.error(f"Barcode validation failed: hub returned '{response_data['comment']}'")
             display.render_view(Alerts.UnitNotFoundAlert)
             display.render_view(Alerts.ScanBarcodeAlert)
         else:
             # end ongoing operation if there is one
             if spoke.operation_ongoing:
                 # switch to ongoing operation screen since validation succeeded
-                logging.info("Starting operation.")
+                logger.info("Starting operation.")
                 display.render_view(Alerts.OperationStartedAlert)
                 display.render_view(Views.OngoingOperationScreen)
             else:
                 # switch back to await screen
-                logging.info("Operation in progress. Stopping.")
+                logger.info("Operation in progress. Stopping.")
                 display.render_view(Alerts.OperationEndedAlert)
                 display.render_view(Alerts.ScanBarcodeAlert)
 
@@ -235,7 +235,7 @@ class HidEventHandler(Resource):
             position = response_data["employee_data"]["position"]
             worker.log_in(position, name, rfid_card_id)
         else:
-            logging.error("Employee could not be authorized: hub rejected ID card")
+            logger.error("Employee could not be authorized: hub rejected ID card")
 
 
 class ResetState(Resource):
@@ -262,18 +262,18 @@ def sync_login_status(no_feedback: bool = False) -> None:
 
         # identify conflicts and treat accordingly
         if is_logged_in == worker.is_authorized:
-            logging.debug("local and global login statuses match. no discrepancy found.")
+            logger.debug("local and global login statuses match. no discrepancy found.")
         elif is_logged_in and not worker.is_authorized:
-            logging.info("Employee is logged in on the backend. Logging in locally.")
+            logger.info("Employee is logged in on the backend. Logging in locally.")
             employee_data: tp.Dict[str, str] = workbench_status["employee"]
             worker.log_in(employee_data["position"], employee_data["name"], "")
         elif not is_logged_in and worker.is_authorized:
-            logging.info("Employee is logged out on the backend. Logging out locally.")
+            logger.info("Employee is logged out on the backend. Logging out locally.")
             worker.log_out()
     except BackendUnreachableError:
         pass
     except Exception as e:
-        logging.error(f"Login sync failed: {e}")
+        logger.error(f"Login sync failed: {e}")
 
     # display feedback accordingly
     if no_feedback:
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     display: Display = Display(worker, spoke)  # instantiate Display
     server_ip: str = spoke.config["api"]["server_ip"]
     server_port: int = int(spoke.config["api"]["server_port"])
-    logging.info("Syncing login status")
+    logger.info("Syncing login status")
     sync_login_status()
-    logging.info("Starting server")
+    logger.info("Starting server")
     app.run(host=server_ip, port=server_port)

@@ -1,9 +1,11 @@
-import logging
 import typing as tp
 from threading import Thread
 from time import time
 
+from loguru import logger
+
 from Types import Config
+
 from .Employee import Employee
 from .Spoke import Spoke
 from .ViewBase import View
@@ -12,7 +14,7 @@ from .Views import BlankScreen
 try:
     from .waveshare_epd import epd2in13d, epdconfig
 except Exception as E:
-    logging.error(f"Couldn't import EPD library: {E}")
+    logger.error(f"Couldn't import EPD library: {E}")
 
 
 class Display:
@@ -27,8 +29,8 @@ class Display:
         try:
             self.epd = epd2in13d.EPD()
         except Exception as e:
-            logging.warning("E-ink display initialization failed. Fallback to headless mode.")
-            logging.debug(e)
+            logger.warning("E-ink display initialization failed. Fallback to headless mode.")
+            logger.debug(e)
 
         self.current_view: tp.Optional[View] = None
         self._view_queue: tp.List[tp.Type[View]] = []
@@ -60,19 +62,19 @@ class Display:
             return
         # put the view into queue for rendering if it it is not duplicate
         if self._view_queue and self._view_queue[-1] == view:
-            logging.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
+            logger.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
             return
         elif self.current_view.__class__ == view and not self._view_queue:
-            logging.debug(f"View {view.__name__} is currently on the display. Dropping task.")
+            logger.debug(f"View {view.__name__} is currently on the display. Dropping task.")
             return
         else:
-            logging.debug(f"View {view.__name__} staged for rendering")
+            logger.debug(f"View {view.__name__} staged for rendering")
             self._view_queue.append(view)
         # only start a new thread if there's no ongoing rendering process
         if not self._display_busy:
             self._display_thread = Thread(target=self._render_view_queue)
             self._display_thread.start()
-            logging.debug(f"New queue rendering thread started: {repr(self._display_thread)}")
+            logger.debug(f"New queue rendering thread started: {repr(self._display_thread)}")
 
     def _render_view_queue(self) -> None:
         """render all pending views one by one"""
@@ -80,8 +82,8 @@ class Display:
             pending_view: tp.Type[View] = self._view_queue.pop(0)
             view: View = pending_view(self)
             self.current_view = view
-            logging.info(f"Rendering view {view.name}")
+            logger.info(f"Rendering view {view.name}")
             start_time: float = time()
             view.display()
             end_time: float = time()
-            logging.debug(f"View '{view.name}' displayed in {round(end_time-start_time, 3)} s.")
+            logger.debug(f"View '{view.name}' displayed in {round(end_time-start_time, 3)} s.")

@@ -1,18 +1,20 @@
 from __future__ import annotations
-from dataclasses import dataclass
-import logging
+
 import os
 import typing as tp
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime as dt
 from time import sleep, time
 
+from loguru import logger
 from PIL import Image, ImageDraw, ImageFont
 
 if tp.TYPE_CHECKING:
-    from .waveshare_epd import epd2in13d
-    from PIL.ImageFont import FreeTypeFont
     from Display import Display
+    from PIL.ImageFont import FreeTypeFont
+
+    from .waveshare_epd import epd2in13d
 
 # paths
 FONT_PATH: str = "feecc_spoke/fonts/helvetica-cyrillic-bold.ttf"
@@ -47,7 +49,7 @@ class View(ABC):
         self._width: int = self._epd.height
 
         # fonts
-        logging.debug(f"Using font {os.path.basename(FONT_PATH)}")
+        logger.debug(f"Using font {os.path.basename(FONT_PATH)}")
         self._font_s: FreeTypeFont = ImageFont.truetype(FONT_PATH, SMALL_FONT_SIZE)
         self._font_m: FreeTypeFont = ImageFont.truetype(FONT_PATH, MEDIUM_FONT_SIZE)
         self._font_l: FreeTypeFont = ImageFont.truetype(FONT_PATH, LARGE_FONT_SIZE)
@@ -62,7 +64,7 @@ class View(ABC):
 
         image_name = f"{IMAGE_DIRECTORY_PATH}/{self.name}-{str(dt.now()).split('.')[0]}.png"
         image.save(image_name)
-        logging.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
+        logger.info(f"Saved view {self.name} as '{image_name.split('/')[-1]}'")
 
     def _render_image(self, image: Image) -> None:
         """display the provided image and save it if needed"""
@@ -74,11 +76,11 @@ class View(ABC):
         if self._rotate:
             image = image.rotate(180)
 
-        logging.info(f"Rendering {self.name} view on the screen")
+        logger.info(f"Rendering {self.name} view on the screen")
         self._epd.display(self._epd.getbuffer(image))
 
         end_time: float = time()
-        logging.debug(f"Image rendering took {round(end_time-start_time, 3)} s.")
+        logger.debug(f"Image rendering took {round(end_time-start_time, 3)} s.")
 
     def _align_center(self, text: str, font: FreeTypeFont) -> tp.Tuple[int, int]:
         """get the coordinates of the upper left corner for the centered text"""
@@ -176,7 +178,7 @@ class Alert(View):
             font = self._font_s
             footer = self._ensure_fitting(self._footer, font, 10)
             lines: int = footer.count("\n") + 1
-            logging.debug(f"Alert footer: {footer} ({lines} lines)")
+            logger.debug(f"Alert footer: {footer} ({lines} lines)")
             footer_w, _ = self._align_center(footer, font=font)
             _, footer_h = alert_draw.textsize(message, font)
             if lines > 1:

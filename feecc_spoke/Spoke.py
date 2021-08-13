@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import subprocess
@@ -7,6 +6,7 @@ import typing as tp
 
 import requests
 import yaml
+from loguru import logger
 
 from exceptions import BackendUnreachableError
 from Types import Config, RequestPayload
@@ -48,7 +48,7 @@ class Spoke:
             workbench_status: RequestPayload = requests.get(url, timeout=1).json()
             return workbench_status
         except Exception as E:
-            logging.error(f"Backend unreachable: {E}")
+            logger.error(f"Backend unreachable: {E}")
             raise BackendUnreachableError
 
     @property
@@ -63,13 +63,13 @@ class Spoke:
     def _get_config(config_path: str = "config.yaml") -> Config:
         """load up config file"""
         if not os.path.exists(config_path):
-            logging.critical(f"Configuration file {config_path} doesn't exist. Exiting.")
+            logger.critical(f"Configuration file {config_path} doesn't exist. Exiting.")
             sys.exit()
 
         with open(config_path) as f:
             content = f.read()
             config_f: Config = yaml.load(content, Loader=yaml.SafeLoader)
-            logging.debug(f"Configuration dict: {config_f}")
+            logger.debug(f"Configuration dict: {config_f}")
             return config_f
 
     def identify_sender(self, sender_device_name: str) -> str:

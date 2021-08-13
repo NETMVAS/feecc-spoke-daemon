@@ -4,11 +4,11 @@ import typing as tp
 
 from PIL import ImageFont
 
-from .ViewBase import Alert, FONT_PATH, Icon, SMALL_FONT_SIZE
+from .ViewBase import FONT_PATH, SMALL_FONT_SIZE, Alert, Icon
 
 if tp.TYPE_CHECKING:
-    from PIL.ImageFont import FreeTypeFont
     from Display import Display
+    from PIL.ImageFont import FreeTypeFont
 
 
 class FailedAuthorizationAlert(Alert):

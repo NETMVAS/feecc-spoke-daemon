@@ -1,6 +1,7 @@
-import logging
 import typing as tp
 from dataclasses import dataclass
+
+from loguru import logger
 
 
 @dataclass
@@ -27,7 +28,7 @@ class Employee:
                 short_name.append(part)
             return " ".join(short_name)
         except Exception as E:
-            logging.debug(f"Short name generation failed for the full name '{full_name}'. E: {E}")
+            logger.debug(f"Short name generation failed for the full name '{full_name}'. E: {E}")
             return full_name
 
     def log_in(self, position: str, full_name: str, card_id: str) -> None:
@@ -36,11 +37,11 @@ class Employee:
         self.position = position
         self.rfid_card_id = card_id
         self.is_authorized = True
-        logging.info(f"{self.position} {self.short_name} logged in")
+        logger.info(f"{self.position} {self.short_name} logged in")
 
     def log_out(self) -> None:
         """end working session and log out the worker"""
         self.full_name = ""
         self.position = ""
         self.is_authorized = False
-        logging.info(f"{self.position} {self.short_name} logged out")
+        logger.info(f"{self.position} {self.short_name} logged out")
