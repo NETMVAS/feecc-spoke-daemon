@@ -1,11 +1,11 @@
 import typing as tp
+from collections import deque
 from threading import Thread
 from time import time
 
 from loguru import logger
 
 from Types import Config
-
 from .Employee import Employee
 from .Spoke import Spoke
 from .ViewBase import View
@@ -33,7 +33,7 @@ class Display:
             logger.debug(e)
 
         self.current_view: tp.Optional[View] = None
-        self._view_queue: tp.List[tp.Type[View]] = []
+        self._view_queue: tp.Deque[tp.Type[View]] = deque()
         self._display_thread: tp.Optional[Thread] = None
 
         # clear the screen at the first start in case it has leftover images on it
@@ -79,7 +79,7 @@ class Display:
     def _render_view_queue(self) -> None:
         """render all pending views one by one"""
         while self._view_queue:
-            pending_view: tp.Type[View] = self._view_queue.pop(0)
+            pending_view: tp.Type[View] = self._view_queue.popleft()
             view: View = pending_view(self)
             self.current_view = view
             logger.info(f"Rendering view {view.name}")
