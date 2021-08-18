@@ -123,7 +123,10 @@ class HidEventHandler(Resource):
 
     def _barcode_handling(self, barcode_string: str) -> RequestPayload:
         if spoke.operation_ongoing:
-            return self.end_operation(barcode_string)
+            response_data: RequestPayload = self.end_operation(barcode_string)
+            if spoke.config["general"]["send_upload_request"]:
+                self._send_upload_request(barcode_string)
+            return response_data
         else:
             return self.start_operation(barcode_string)
 
@@ -185,6 +188,13 @@ class HidEventHandler(Resource):
         payload = {"workbench_no": spoke.number}
         url = f"{spoke.hub_url}/api/employee/log-out"
         send_request_to_backend(url, payload)
+
+    @staticmethod
+    def _send_upload_request(unit_internal_id: str) -> RequestPayload:
+        """send a request to upload the unit data"""
+        payload = {"workbench_no": spoke.number}
+        url = f"{spoke.hub_url}/api/unit/{unit_internal_id}/upload"
+        return send_request_to_backend(url, payload)
 
     def log_out(self, rfid_card_id: str) -> None:
         """log employee out"""

@@ -1,6 +1,7 @@
 general: # miscellaneous parameters
   workbench_no: 2 # associated workbench number
   production_stage_name: "Assembly"
+  send_upload_request: true
 
 endpoints:
   hub_socket: "http://192.168.88.254:5000" # hub api socket on the LAN
