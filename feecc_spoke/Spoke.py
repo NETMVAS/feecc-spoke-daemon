@@ -36,10 +36,13 @@ class Spoke:
     @property
     def ipv4(self) -> tp.Optional[str]:
         """gets device's own ipv4 address on the local network"""
-        command = "ip address | grep 192.168"
-        output: str = subprocess.check_output(command, shell=True, text=True)
-        ip_addresses: tp.List[str] = re.findall("192.168.\d+.\d+", output)
-        return ip_addresses[0] if ip_addresses else None
+        try:
+            command = "ip address | grep 192.168"
+            output: str = subprocess.check_output(command, shell=True, text=True)
+            ip_addresses: tp.List[str] = re.findall("192.168.\d+.\d+", output)
+            return ip_addresses[0] if ip_addresses else None
+        except Exception as E:
+            logger.error(f"An error occurred while retrieving own ipv4: {E}")
 
     @property
     def workbench_status(self) -> RequestPayload:
