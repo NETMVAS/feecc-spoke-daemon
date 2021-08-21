@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import subprocess
@@ -10,16 +12,20 @@ import requests
 import yaml
 from loguru import logger
 
-from Types import Config, RequestPayload
-from exceptions import BackendUnreachableError
+from .Exceptions import BackendUnreachableError
+from .Types import Config, RequestPayload
 from ._Singleton import SingletonMeta
-from .State import AwaitLogin, State
+
+if tp.TYPE_CHECKING:
+    from .State import State
 
 
 class Spoke(metaclass=SingletonMeta):
     """stores device's status and operational data"""
 
     def __init__(self) -> None:
+        from .State import AwaitLogin  # moved to avoid circular import issue
+
         self.config: Config = self._get_config()
         self.associated_unit_internal_id: tp.Optional[str] = None
         self.state: State = AwaitLogin()
@@ -116,7 +122,7 @@ class Spoke(metaclass=SingletonMeta):
 
     def apply_state(self, state: tp.Type[State], *args: tp.Any, **kwargs: tp.Any) -> None:
         """execute provided state in the background"""
-        self.previous_state = self.state.__class__
+        self.previous_state = self.state_class
         self.state = state()
         logger.info(f"Workbench state is now {self.state.name}")
 

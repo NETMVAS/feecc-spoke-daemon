@@ -7,7 +7,7 @@ from PIL import ImageFont
 from .ViewBase import FONT_PATH, SMALL_FONT_SIZE, Alert, Icon
 
 if tp.TYPE_CHECKING:
-    from Display import Display
+    from .Display import Display
     from PIL.ImageFont import FreeTypeFont
 
 

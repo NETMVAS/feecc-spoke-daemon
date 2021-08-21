@@ -7,13 +7,12 @@ from dataclasses import dataclass
 from datetime import datetime as dt
 from time import sleep, time
 
-from loguru import logger
 from PIL import Image, ImageDraw, ImageFont
+from loguru import logger
 
 if tp.TYPE_CHECKING:
-    from Display import Display
+    from .Display import Display
     from PIL.ImageFont import FreeTypeFont
-
     from .waveshare_epd import epd2in13d
 
 # paths

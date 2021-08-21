@@ -5,9 +5,9 @@ from time import time
 
 from loguru import logger
 
-from Types import Config
 from .Employee import Employee
 from .Spoke import Spoke
+from .Types import Config
 from .ViewBase import View
 from .Views import BlankScreen
 from ._Singleton import SingletonMeta

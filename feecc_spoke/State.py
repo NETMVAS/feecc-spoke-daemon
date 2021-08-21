@@ -6,12 +6,12 @@ from abc import ABC, abstractmethod
 import requests
 from loguru import logger
 
-from Types import AddInfo, RequestPayload
-from exceptions import BackendUnreachableError, StateForbiddenError
 from . import Alerts, ViewBase, Views
 from .Display import Display
 from .Employee import Employee
+from .Exceptions import BackendUnreachableError, StateForbiddenError
 from .Spoke import Spoke
+from .Types import AddInfo, RequestPayload
 
 
 class State(ABC):
@@ -79,11 +79,11 @@ class State(ABC):
                 self._send_log_out_request()
 
             if any(
-                    (
-                            Employee().rfid_card_id == rfid_card_id,
-                            not Employee().rfid_card_id,
-                            Spoke().disable_id_validation,
-                    )
+                (
+                    Employee().rfid_card_id == rfid_card_id,
+                    not Employee().rfid_card_id,
+                    Spoke().disable_id_validation,
+                )
             ):
                 Employee().log_out()
                 Display().render_view(Alerts.SuccessfulLogOutAlert)
