@@ -34,10 +34,10 @@ def end_session() -> None:
 
 
 class HidEventHandler(Resource):
-    """handles RFID and barcode scanner events"""
+    """Handles RFID and barcode scanner events"""
 
     def post(self) -> None:
-        # parse the event dict JSON
+        """Parse the event dict JSON"""
         event_dict: RequestPayload = request.get_json()  # type: ignore
         logger.debug(f"Received event dict:\n{event_dict}")
         # handle the event in accord with it's source
@@ -57,7 +57,8 @@ class HidEventHandler(Resource):
             workbench_status: RequestPayload = Spoke().workbench_status
             if not Employee().is_authorized == workbench_status["employee_logged_in"]:
                 sync_login_status()
-        except BackendUnreachableError:
+        except BackendUnreachableError as E:
+            logger.error(f"Failed to handle RFID event: {E}, event: {event_dict}")
             pass
 
         if Spoke().state_class in [AuthorizedIdling, ProductionStageOngoing]:

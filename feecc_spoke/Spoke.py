@@ -59,8 +59,9 @@ class Spoke(metaclass=SingletonMeta):
             workbench_status: RequestPayload = requests.get(url, timeout=1).json()
             return workbench_status
         except Exception as E:
-            logger.error(f"Backend unreachable: {E}")
-            raise BackendUnreachableError
+            message = f"Backend unreachable: {E}"
+            logger.error(message)
+            raise BackendUnreachableError(message)
 
     @property
     def disable_id_validation(self) -> bool:
