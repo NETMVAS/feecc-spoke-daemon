@@ -2,7 +2,9 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import typing as tp
+from random import randint
 
 import requests
 import yaml
@@ -11,6 +13,7 @@ from loguru import logger
 from Types import Config, RequestPayload
 from exceptions import BackendUnreachableError
 from ._Singleton import SingletonMeta
+from .State import AwaitLogin, State
 
 
 class Spoke(metaclass=SingletonMeta):
@@ -19,6 +22,9 @@ class Spoke(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.config: Config = self._get_config()
         self.associated_unit_internal_id: tp.Optional[str] = None
+        self.state: State = AwaitLogin()
+        self.previous_state: tp.Optional[tp.Type[State]] = None
+        self._state_thread_list: tp.List[threading.Thread] = []
 
     @property
     def operation_ongoing(self) -> bool:
@@ -88,3 +94,39 @@ class Spoke(metaclass=SingletonMeta):
                 break
 
         return sender
+
+    @property
+    def _state_thread(self) -> tp.Optional[threading.Thread]:
+        return self._state_thread_list[-1] if self._state_thread_list else None
+
+    @_state_thread.setter
+    def _state_thread(self, state_thread: threading.Thread) -> None:
+        self._state_thread_list.append(state_thread)
+        thread_list = self._state_thread_list
+        logger.debug(
+            f"Attribute _state_thread_list of WorkBench is now of len {len(thread_list)}:\n"
+            f"{[repr(t) for t in thread_list]}\n"
+            f"Threads alive: {list(filter(lambda t: t.is_alive(), thread_list))}"
+        )
+
+    @property
+    def state_class(self) -> tp.Type[State]:
+        return self.state.__class__
+
+    def apply_state(self, state: tp.Type[State], *args: tp.Any, **kwargs: tp.Any) -> None:
+        """execute provided state in the background"""
+        self.previous_state = self.state.__class__
+        self.state = state()
+        logger.info(f"Workbench state is now {self.state.name}")
+
+        # execute state in the background
+        thread_name: str = f"{self.state.name}-{randint(1, 999)}"
+        logger.debug(f"Trying to execute state: {self.state.name} in thread {thread_name}")
+        self._state_thread = threading.Thread(
+            target=self.state.perform_on_apply,
+            args=args,
+            kwargs=kwargs,
+            daemon=False,
+            name=thread_name,
+        )
+        self._state_thread.start()

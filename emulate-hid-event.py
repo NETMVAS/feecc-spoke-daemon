@@ -27,8 +27,8 @@ def generic_hid_event(sender: str, payload: str) -> None:
             SERVER_API_ADDRESS + "/hid_event",
             json={"string": payload, "name": sender},
         )
-    except Exception as e:
-        print(f"Server {SERVER_API_ADDRESS} unreachable: {e}")
+    except Exception as E:
+        print(f"Server {SERVER_API_ADDRESS} unreachable: {E}")
         return
 
     pprint(response.json())

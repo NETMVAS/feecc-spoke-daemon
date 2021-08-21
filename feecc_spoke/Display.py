@@ -29,9 +29,9 @@ class Display(metaclass=SingletonMeta):
 
         try:
             self.epd = epd2in13d.EPD()
-        except Exception as e:
+        except Exception as E:
             logger.warning("E-ink display initialization failed. Fallback to headless mode.")
-            logger.debug(e)
+            logger.debug(E)
 
         self.current_view: tp.Optional[View] = None
         self._view_queue: tp.Deque[tp.Type[View]] = deque()

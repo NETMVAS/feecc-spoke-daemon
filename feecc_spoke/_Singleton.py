@@ -20,11 +20,7 @@ class SingletonMeta(type):
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance
-            logger.info(
-                f"Initialized a new instance of {cls.__name__} at {id(cls._instances[cls])}"
-            )
+            logger.info(f"Initialized a new instance of {cls.__name__} at {id(cls._instances[cls])}")
         else:
-            logger.debug(
-                f"An instance of {cls.__name__} already exists at {id(cls._instances[cls])}. Reusing."
-            )
+            logger.debug(f"An instance of {cls.__name__} already exists at {id(cls._instances[cls])}. Reusing.")
         return cls._instances[cls]

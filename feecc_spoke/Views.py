@@ -30,9 +30,7 @@ class LoginScreen(View):
 
         # draw the message
         message = "Приложите\nпропуск\nк сканеру"
-        login_screen_draw.text(
-            (35 + 50 + 10, block_start), message, font=self._font_s, fill=MAIN_COLOR
-        )
+        login_screen_draw.text((35 + 50 + 10, block_start), message, font=self._font_s, fill=MAIN_COLOR)
 
         # draw the footer
         footer = f"spoke no.{self._display.spoke_config['general']['workbench_no']}"
