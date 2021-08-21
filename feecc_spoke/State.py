@@ -6,14 +6,12 @@ from abc import ABC, abstractmethod
 import requests
 from loguru import logger
 
-import Alerts
-import ViewBase
-import Views
-from Display import Display
-from Spoke import Spoke
 from Types import AddInfo, RequestPayload
 from exceptions import BackendUnreachableError, StateForbiddenError
+from . import Alerts, ViewBase, Views
+from .Display import Display
 from .Employee import Employee
+from .Spoke import Spoke
 
 
 class State(ABC):
@@ -81,11 +79,11 @@ class State(ABC):
                 self._send_log_out_request()
 
             if any(
-                (
-                    Employee().rfid_card_id == rfid_card_id,
-                    not Employee().rfid_card_id,
-                    Spoke().disable_id_validation,
-                )
+                    (
+                            Employee().rfid_card_id == rfid_card_id,
+                            not Employee().rfid_card_id,
+                            Spoke().disable_id_validation,
+                    )
             ):
                 Employee().log_out()
                 Display().render_view(Alerts.SuccessfulLogOutAlert)
@@ -160,7 +158,7 @@ class State(ABC):
         except Exception as E:
             logger.error(f"Backend unreachable: {E}")
             previous_view: tp.Optional[tp.Type[ViewBase.View]] = (
-                Display().current_view.__class__ if Display().current_view is not None else None
+                None if not Display().current_view else Display().current_view.__class__  # type: ignore
             )
             Display().render_view(Alerts.BackendUnreachableAlert)
 
