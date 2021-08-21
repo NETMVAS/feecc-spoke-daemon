@@ -3,9 +3,11 @@ from dataclasses import dataclass
 
 from loguru import logger
 
+from ._Singleton import SingletonMeta
+
 
 @dataclass
-class Employee:
+class Employee(metaclass=SingletonMeta):
     """stores data about the worker"""
 
     is_authorized: bool = False

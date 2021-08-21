@@ -8,11 +8,12 @@ import requests
 import yaml
 from loguru import logger
 
-from exceptions import BackendUnreachableError
 from Types import Config, RequestPayload
+from exceptions import BackendUnreachableError
+from ._Singleton import SingletonMeta
 
 
-class Spoke:
+class Spoke(metaclass=SingletonMeta):
     """stores device's status and operational data"""
 
     def __init__(self) -> None:
@@ -43,6 +44,7 @@ class Spoke:
             return ip_addresses[0] if ip_addresses else None
         except Exception as E:
             logger.error(f"An error occurred while retrieving own ipv4: {E}")
+            return None
 
     @property
     def workbench_status(self) -> RequestPayload:

@@ -10,6 +10,7 @@ from .Employee import Employee
 from .Spoke import Spoke
 from .ViewBase import View
 from .Views import BlankScreen
+from ._Singleton import SingletonMeta
 
 try:
     from .waveshare_epd import epd2in13d, epdconfig
@@ -17,12 +18,12 @@ except Exception as E:
     logger.error(f"Couldn't import EPD library: {E}")
 
 
-class Display:
+class Display(metaclass=SingletonMeta):
     """the context class. handles hardware display operation and view management"""
 
-    def __init__(self, associated_worker: Employee, associated_spoke: Spoke) -> None:
-        self.associated_worker: Employee = associated_worker
-        self.associated_spoke: Spoke = associated_spoke
+    def __init__(self) -> None:
+        self.associated_worker: Employee = Employee()
+        self.associated_spoke: Spoke = Spoke()
         self.spoke_config: Config = self.associated_spoke.config
         self.epd: tp.Optional[epd2in13d.EPD] = None
 
