@@ -1,4 +1,4 @@
-exclude: ".venv|test*|.git"
+exclude: ".venv|test*|.git|epd*"
 default_stages: [commit]
 fail_fast: false
 
