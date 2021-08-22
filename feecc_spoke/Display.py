@@ -45,6 +45,10 @@ class Display(metaclass=SingletonMeta):
         return any((self.epd is None, self.spoke_config["screen"]["enforce_headless"]))
 
     @property
+    def current_view_class(self) -> tp.Optional[tp.Type[View]]:
+        return self.current_view.__class__ if self.current_view else None
+
+    @property
     def _display_busy(self) -> bool:
         return self._display_thread is not None and self._display_thread.is_alive()
 

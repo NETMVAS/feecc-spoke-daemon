@@ -157,9 +157,7 @@ class State(ABC):
 
         except Exception as E:
             logger.error(f"Backend unreachable: {E}")
-            previous_view: tp.Optional[tp.Type[ViewBase.View]] = (
-                None if not Display().current_view else Display().current_view.__class__  # type: ignore
-            )
+            previous_view: tp.Optional[tp.Type[ViewBase.View]] = Display().current_view_class
             Display().render_view(Alerts.BackendUnreachableAlert)
 
             if previous_view is not None:
@@ -188,7 +186,7 @@ class State(ABC):
             return self._send_request_to_backend(url, payload)
         except BackendUnreachableError as E:
             logger.error(f"Backend unreachable: {E}")
-            return {"status": False}
+            return {"status": False, "comment": E}
 
 
 class AwaitLogin(State, ABC):
