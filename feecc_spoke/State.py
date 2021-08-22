@@ -99,21 +99,20 @@ class State(ABC):
     def start_operation(self, barcode_string: str, additional_info: AddInfo = None) -> None:
         """send a request to start operation on the provided unit"""
         Spoke().associated_unit_internal_id = barcode_string
-        if Spoke().disable_barcode_validation:
-            return
 
-        url = f"{Spoke().hub_url}/api/unit/{barcode_string}/start"
-        payload = {
-            "workbench_no": Spoke().number,
-            "production_stage_name": Spoke().config["general"]["production_stage_name"],
-            "additional_info": additional_info if additional_info else {},
-        }
+        if not Spoke().disable_barcode_validation:
+            url = f"{Spoke().hub_url}/api/unit/{barcode_string}/start"
+            payload = {
+                "workbench_no": Spoke().number,
+                "production_stage_name": Spoke().config["general"]["production_stage_name"],
+                "additional_info": additional_info if additional_info else {},
+            }
 
-        try:
-            self._send_request_to_backend(url, payload)
-        except BackendUnreachableError as E:
-            logger.error(f"Backend unreachable: {E}")
-            return
+            try:
+                self._send_request_to_backend(url, payload)
+            except BackendUnreachableError as E:
+                logger.error(f"Backend unreachable: {E}")
+                return
 
         self.context.apply_state(ProductionStageOngoing)
 
