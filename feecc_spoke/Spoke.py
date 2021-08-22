@@ -27,7 +27,7 @@ class Spoke(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.config: Config = self._get_config()
         self.associated_unit_internal_id: tp.Optional[str] = None
-        self.state: State = AwaitLogin()
+        self.state: State = AwaitLogin(self)
         self.previous_state: tp.Optional[tp.Type[State]] = None
         self._state_thread_list: tp.List[threading.Thread] = []
 
@@ -154,7 +154,7 @@ class Spoke(metaclass=SingletonMeta):
     def apply_state(self, state: tp.Type[State], *args: tp.Any, **kwargs: tp.Any) -> None:
         """execute provided state in the background"""
         self.previous_state = self.state_class
-        self.state = state()
+        self.state = state(self)
         logger.info(f"Workbench state is now {self.state.name}")
 
         # execute state in the background

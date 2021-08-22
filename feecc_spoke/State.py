@@ -19,12 +19,12 @@ if tp.TYPE_CHECKING:
 class State(ABC):
     """abstract State class for states to inherit from"""
 
-    def __init__(self) -> None:
-        from .Spoke import Spoke
+    def __init__(self, spoke: Spoke) -> None:
+        self._spoke: Spoke = spoke
 
     @property
     def context(self) -> Spoke:
-        return Spoke()
+        return self._spoke
 
     @property
     def name(self) -> str:
@@ -47,7 +47,7 @@ class State(ABC):
         response_data: RequestPayload
         logger.info(f"Got login request. RFID Card ID: {rfid_card_id}")
 
-        if Spoke().disable_id_validation:
+        if self._spoke.disable_id_validation:
             # perform development log in if set in config
             logger.info("Employee authorized regardless of the ID card: development auth is on.")
             response_data = {
@@ -79,14 +79,14 @@ class State(ABC):
         logger.info(f"Trying to logout employee with RFID card ID: {rfid_card_id}")
 
         try:
-            if not Spoke().disable_id_validation:
+            if not self._spoke.disable_id_validation:
                 self._send_log_out_request()
 
             if any(
                 (
                     Employee().rfid_card_id == rfid_card_id,
                     not Employee().rfid_card_id,
-                    Spoke().disable_id_validation,
+                    self._spoke.disable_id_validation,
                 )
             ):
                 Employee().log_out()
@@ -103,13 +103,13 @@ class State(ABC):
     @tp.no_type_check
     def start_operation(self, barcode_string: str, additional_info: AddInfo = None) -> None:
         """send a request to start operation on the provided unit"""
-        Spoke().associated_unit_internal_id = barcode_string
+        self._spoke.associated_unit_internal_id = barcode_string
 
-        if not Spoke().disable_barcode_validation:
-            url = f"{Spoke().hub_url}/api/unit/{barcode_string}/start"
+        if not self._spoke.disable_barcode_validation:
+            url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/start"
             payload = {
-                "workbench_no": Spoke().number,
-                "production_stage_name": Spoke().config["general"]["production_stage_name"],
+                "workbench_no": self._spoke.number,
+                "production_stage_name": self._spoke.config["general"]["production_stage_name"],
                 "additional_info": additional_info if additional_info else {},
             }
 
@@ -124,18 +124,18 @@ class State(ABC):
     @tp.no_type_check
     def end_operation(self, barcode_string: str, additional_info: AddInfo = None):
         """send a request to end operation on the provided unit"""
-        Spoke().associated_unit_internal_id = None
-        if Spoke().disable_barcode_validation:
+        self._spoke.associated_unit_internal_id = None
+        if self._spoke.disable_barcode_validation:
             self.context.apply_state(AuthorizedIdling)
             return
-        url = f"{Spoke().hub_url}/api/unit/{barcode_string}/end"
+        url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/end"
         payload = {
-            "workbench_no": Spoke().number,
+            "workbench_no": self._spoke.number,
             "additional_info": additional_info if additional_info else {},
         }
         try:
             self._send_request_to_backend(url, payload)
-            if Spoke().config["general"]["send_upload_request"]:
+            if self._spoke.config["general"]["send_upload_request"]:
                 self._send_upload_request(barcode_string)
             Display().render_view(Alerts.OperationEndedAlert)
             self.context.apply_state(AuthorizedIdling)
@@ -172,22 +172,22 @@ class State(ABC):
             raise BackendUnreachableError
 
     def _send_log_out_request(self) -> None:
-        payload = {"workbench_no": Spoke().number}
-        url = f"{Spoke().hub_url}/api/employee/log-out"
+        payload = {"workbench_no": self._spoke.number}
+        url = f"{self._spoke.hub_url}/api/employee/log-out"
         self._send_request_to_backend(url, payload)
 
     def _send_upload_request(self, unit_internal_id: str) -> RequestPayload:
         """send a request to upload the unit data"""
-        payload = {"workbench_no": Spoke().number}
-        url = f"{Spoke().hub_url}/api/unit/{unit_internal_id}/upload"
+        payload = {"workbench_no": self._spoke.number}
+        url = f"{self._spoke.hub_url}/api/unit/{unit_internal_id}/upload"
         return self._send_request_to_backend(url, payload)
 
     def _send_log_in_request(self, rfid_card_no: str) -> RequestPayload:
         payload = {
-            "workbench_no": Spoke().number,
+            "workbench_no": self._spoke.number,
             "employee_rfid_card_no": rfid_card_no,
         }
-        url = f"{Spoke().hub_url}/api/employee/log-in"
+        url = f"{self._spoke.hub_url}/api/employee/log-in"
         try:
             return self._send_request_to_backend(url, payload)
         except BackendUnreachableError:
