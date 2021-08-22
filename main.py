@@ -51,7 +51,7 @@ class HidEventHandler(Resource):
                 logger.error(message)
                 return {"status": False, "comment": message}
 
-            return {"status": True, "comment": f"Hid event has been handled as expected"}
+            return {"status": True, "comment": "Hid event has been handled as expected"}
 
         except StateForbiddenError as E:
             return {"status": False, "comment": f"operation is forbidden by the state: {E}"}
