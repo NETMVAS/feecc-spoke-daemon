@@ -30,11 +30,6 @@ class State(ABC):
     def name(self) -> str:
         return self.__class__.__name__
 
-    @property
-    def description(self) -> str:
-        """returns own docstring which describes the state"""
-        return self.__doc__ or ""
-
     @abstractmethod
     @tp.no_type_check
     def perform_on_apply(self, *args, **kwargs) -> None:
@@ -114,7 +109,11 @@ class State(ABC):
             }
 
             try:
-                self._send_request_to_backend(url, payload)
+                response: RequestPayload = self._send_request_to_backend(url, payload)
+                if not response["status"]:
+                    logger.error(response)
+                    Display().render_view(Alerts.UnitNotFoundAlert)
+                    return
             except BackendUnreachableError as E:
                 logger.error(f"Backend unreachable: {E}")
                 return
