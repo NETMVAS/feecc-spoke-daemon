@@ -40,7 +40,6 @@ class State(ABC):
     def start_shift(self, rfid_card_id: str) -> None:
         """log employee in"""
         response_data: RequestPayload
-
         logger.info(f"Got login request. RFID Card ID: {rfid_card_id}")
 
         if Spoke().disable_id_validation:
@@ -185,8 +184,7 @@ class State(ABC):
         try:
             return self._send_request_to_backend(url, payload)
         except BackendUnreachableError as E:
-            logger.error(f"Backend unreachable: {E}")
-            return {"status": False, "comment": E}
+            return {"status": False, "comment": "Backend is unreachable"}
 
 
 class AwaitLogin(State, ABC):
