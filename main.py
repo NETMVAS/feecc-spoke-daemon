@@ -75,9 +75,15 @@ class HidEventHandler(Resource):
         logger.debug(f"Handling barcode event. EAN: {barcode_string}, additional_info: {additional_info or 'is empty'}")
 
         if Spoke().state_class is AuthorizedIdling:
+            logger.info(f"Starting an operation for unit with int. id {barcode_string}")
             Spoke().state.start_operation(barcode_string, additional_info)
         elif Spoke().state_class is ProductionStageOngoing:
+            logger.info(f"Ending an operation for unit with int. id {barcode_string}")
             Spoke().state.end_operation(barcode_string, additional_info)
+        else:
+            logger.error(
+                f"Nothing to do for unit with int. id {barcode_string}. Ignoring event since no one is authorized."
+            )
 
 
 api.add_resource(HidEventHandler, "/api/hid_event")

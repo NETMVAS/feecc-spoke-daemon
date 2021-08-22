@@ -183,7 +183,7 @@ class State(ABC):
         url = f"{Spoke().hub_url}/api/employee/log-in"
         try:
             return self._send_request_to_backend(url, payload)
-        except BackendUnreachableError as E:
+        except BackendUnreachableError:
             return {"status": False, "comment": "Backend is unreachable"}
 
 
