@@ -138,11 +138,14 @@ class State(ABC):
             logger.error(f"Backend unreachable: {E}")
 
     @staticmethod
-    def _state_forbidden(message: tp.Optional[str] = None) -> None:
+    def _state_forbidden(message: tp.Optional[str] = None, display_alert: bool = True) -> None:
         """Display a message about an operation forbidden by the state"""
         msg: str = f"Operation forbidden by the state. Details: {message}"
         logger.error(msg)
-        Display().render_view(Alerts.OperationForbiddenAlert)
+
+        if display_alert:
+            Display().render_view(Alerts.OperationForbiddenAlert)
+
         raise StateForbiddenError(msg)
 
     @staticmethod
@@ -229,12 +232,12 @@ class ProductionStageOngoing(State):
 
     def start_shift(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot log in: a worker is already logged in at the workbench."
-        self._state_forbidden(msg)
+        self._state_forbidden(msg, False)
 
     def end_shift(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot log out: there is an ongoing operation at the workbench."
-        self._state_forbidden(msg)
+        self._state_forbidden(msg, False)
 
     def start_operation(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot start an operation: there is already an ongoing operation at the workbench."
-        self._state_forbidden(msg)
+        self._state_forbidden(msg, False)

@@ -9,7 +9,7 @@ from _logging import CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG
 from feecc_spoke import Alerts, Views
 from feecc_spoke.Display import Display
 from feecc_spoke.Employee import Employee
-from feecc_spoke.Exceptions import BackendUnreachableError
+from feecc_spoke.Exceptions import BackendUnreachableError, StateForbiddenError
 from feecc_spoke.Spoke import Spoke
 from feecc_spoke.State import AuthorizedIdling, AwaitLogin, ProductionStageOngoing
 from feecc_spoke.Types import AddInfo, RequestPayload
@@ -42,12 +42,16 @@ class HidEventHandler(Resource):
         logger.debug(f"Received event dict:\n{event_dict}")
         # handle the event in accord with it's source
         sender = Spoke().identify_sender(event_dict["name"])
-        if sender == "rfid_reader":
-            self._handle_rfid_event(event_dict)
-        elif sender == "barcode_reader":
-            self._handle_barcode_event(event_dict["string"])
-        else:
-            logger.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
+
+        try:
+            if sender == "rfid_reader":
+                self._handle_rfid_event(event_dict)
+            elif sender == "barcode_reader":
+                self._handle_barcode_event(event_dict["string"])
+            else:
+                logger.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
+        except StateForbiddenError:
+            pass
 
     @staticmethod
     def _handle_rfid_event(event_dict: RequestPayload) -> None:
