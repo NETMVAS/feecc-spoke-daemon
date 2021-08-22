@@ -6,7 +6,6 @@ from time import time
 from loguru import logger
 
 from .Employee import Employee
-from .Spoke import Spoke
 from .Types import Config
 from .ViewBase import View
 from .Views import BlankScreen
@@ -22,6 +21,8 @@ class Display(metaclass=SingletonMeta):
     """the context class. handles hardware display operation and view management"""
 
     def __init__(self) -> None:
+        from .Spoke import Spoke
+
         self.associated_worker: Employee = Employee()
         self.associated_spoke: Spoke = Spoke()
         self.spoke_config: Config = self.associated_spoke.config

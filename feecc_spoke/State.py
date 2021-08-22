@@ -10,12 +10,17 @@ from . import Alerts, ViewBase, Views
 from .Display import Display
 from .Employee import Employee
 from .Exceptions import BackendUnreachableError, StateForbiddenError
-from .Spoke import Spoke
 from .Types import AddInfo, RequestPayload
+
+if tp.TYPE_CHECKING:
+    from .Spoke import Spoke
 
 
 class State(ABC):
     """abstract State class for states to inherit from"""
+
+    def __init__(self) -> None:
+        from .Spoke import Spoke
 
     @property
     def context(self) -> Spoke:

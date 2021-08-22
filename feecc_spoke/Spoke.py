@@ -12,20 +12,19 @@ import requests
 import yaml
 from loguru import logger
 
+from . import Alerts, Views
+from .Display import Display
+from .Employee import Employee
 from .Exceptions import BackendUnreachableError
-from .Types import Config, RequestPayload
+from .State import AuthorizedIdling, AwaitLogin, ProductionStageOngoing, State
+from .Types import AddInfo, Config, RequestPayload
 from ._Singleton import SingletonMeta
-
-if tp.TYPE_CHECKING:
-    from .State import State
 
 
 class Spoke(metaclass=SingletonMeta):
     """stores device's status and operational data"""
 
     def __init__(self) -> None:
-        from .State import AwaitLogin  # moved to avoid circular import issue
-
         self.config: Config = self._get_config()
         self.associated_unit_internal_id: tp.Optional[str] = None
         self.state: State = AwaitLogin()
@@ -90,6 +89,38 @@ class Spoke(metaclass=SingletonMeta):
             logger.debug(f"Configuration dict: {config_f}")
             return config_f
 
+    @staticmethod
+    def sync_login_status(no_feedback: bool = False) -> None:
+        """resolve conflicts in login status between backend and local data"""
+        try:
+            # get data from the backend
+            workbench_status: RequestPayload = Spoke().workbench_status
+            is_logged_in: bool = bool(workbench_status["employee_logged_in"])
+
+            # identify conflicts and treat accordingly
+            if is_logged_in == Employee().is_authorized:
+                logger.debug("local and global login statuses match. no discrepancy found.")
+            elif is_logged_in and not Employee().is_authorized:
+                logger.info("Employee is logged in on the backend. Logging in locally.")
+                employee_data: tp.Dict[str, str] = workbench_status["employee"]
+                Employee().log_in(employee_data["position"], employee_data["name"], "")
+            elif not is_logged_in and Employee().is_authorized:
+                logger.info("Employee is logged out on the backend. Logging out locally.")
+                Employee().log_out()
+        except BackendUnreachableError:
+            pass
+        except Exception as E:
+            logger.error(f"Login sync failed: {E}")
+
+        # display feedback accordingly
+        if no_feedback:
+            pass
+        elif Employee().is_authorized:
+            Display().render_view(Alerts.SuccessfulAuthorizationAlert)
+            Display().render_view(Alerts.ScanBarcodeAlert)
+        else:
+            Display().render_view(Views.LoginScreen)
+
     def identify_sender(self, sender_device_name: str) -> str:
         """identify, which device the input is coming from and if it is known return it's role"""
         known_hid_devices: tp.Dict[str, str] = self.config["known_hid_devices"]
@@ -137,3 +168,37 @@ class Spoke(metaclass=SingletonMeta):
             name=thread_name,
         )
         self._state_thread.start()
+
+    def handle_rfid_event(self, event_dict: RequestPayload) -> None:
+        """RFID event handling"""
+        # resolve sync conflicts
+        try:
+            workbench_status: RequestPayload = self.workbench_status
+            if not Employee().is_authorized == workbench_status["employee_logged_in"]:
+                self.sync_login_status()
+        except BackendUnreachableError as E:
+            logger.error(f"Failed to handle RFID event: {E}, event: {event_dict}")
+            pass
+
+        if self.state_class in [AuthorizedIdling, ProductionStageOngoing]:
+            # if worker is logged in - log him out
+            self.state.end_shift(event_dict["string"])
+        elif self.state_class is AwaitLogin:
+            # make a call to authorize the worker otherwise
+            rfid_card_id: str = str(event_dict["string"])
+            self.state.start_shift(rfid_card_id)
+
+    def handle_barcode_event(self, barcode_string: str, additional_info: tp.Optional[AddInfo] = None) -> None:
+        """Barcode event handling"""
+        logger.debug(f"Handling barcode event. EAN: {barcode_string}, additional_info: {additional_info or 'is empty'}")
+
+        if self.state_class is AuthorizedIdling:
+            logger.info(f"Starting an operation for unit with int. id {barcode_string}")
+            self.state.start_operation(barcode_string, additional_info)
+        elif self.state_class is ProductionStageOngoing:
+            logger.info(f"Ending an operation for unit with int. id {barcode_string}")
+            self.state.end_operation(barcode_string, additional_info)
+        else:
+            logger.error(
+                f"Nothing to do for unit with int. id {barcode_string}. Ignoring event since no one is authorized."
+            )
