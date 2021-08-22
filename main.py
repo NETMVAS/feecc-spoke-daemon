@@ -34,7 +34,7 @@ class HidEventHandler(Resource):
     """Handles RFID and barcode scanner events"""
 
     @staticmethod
-    def post() -> None:
+    def post() -> RequestPayload:
         """Parse the event dict JSON"""
         event_dict: RequestPayload = request.get_json()  # type: ignore
         logger.debug(f"Received event dict:\n{event_dict}")
@@ -47,9 +47,14 @@ class HidEventHandler(Resource):
             elif sender == "barcode_reader":
                 Spoke().handle_barcode_event(event_dict["string"])
             else:
-                logger.error("Sender of the event dict is not mentioned in the config. Can't handle the request.")
-        except StateForbiddenError:
-            pass
+                message: str = "Sender of the event dict is not mentioned in the config. Can't handle the request."
+                logger.error(message)
+                return {"status": False, "comment": message}
+
+            return {"status": True, "comment": f"Hid event has been handled as expected"}
+
+        except StateForbiddenError as E:
+            return {"status": False, "comment": f"operation is forbidden by the state: {E}"}
 
 
 api.add_resource(HidEventHandler, "/api/hid_event")
