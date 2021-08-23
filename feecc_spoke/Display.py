@@ -71,11 +71,11 @@ class Display(metaclass=SingletonMeta):
             logger.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
             return
         elif self.current_view.__class__ == view and not self._view_queue:
-            logger.debug(f"View {view.__name__} is currently on the display. Dropping task.")
-            return
-        else:
-            logger.debug(f"View {view.__name__} staged for rendering")
-            self._view_queue.append(view)
+            logger.warning(f"View {view.__name__} is currently on the display. Dropping task.")
+
+        logger.debug(f"View {view.__name__} staged for rendering")
+        self._view_queue.append(view)
+
         # only start a new thread if there's no ongoing rendering process
         if not self._display_busy:
             self._display_thread = Thread(target=self._render_view_queue)

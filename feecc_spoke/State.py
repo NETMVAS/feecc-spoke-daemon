@@ -128,6 +128,7 @@ class State(ABC):
                 if not response["status"]:
                     logger.error(response)
                     Display().render_view(Alerts.UnitNotFoundAlert)
+                    Display().render_view(Alerts.ScanBarcodeAlert)
                     return
             except BackendUnreachableError as E:
                 logger.error(f"Backend unreachable: {E}")
