@@ -88,8 +88,7 @@ class Spoke(metaclass=SingletonMeta):
             logger.debug(f"Configuration dict: {config_f}")
             return config_f
 
-    @staticmethod
-    def sync_login_status(no_feedback: bool = False) -> None:
+    def sync_login_status(self, no_feedback: bool = False) -> None:
         """resolve conflicts in login status between backend and local data"""
         try:
             # get data from the backend
@@ -97,17 +96,23 @@ class Spoke(metaclass=SingletonMeta):
             is_logged_in: bool = bool(workbench_status["employee_logged_in"])
 
             # identify conflicts and treat accordingly
-            if is_logged_in == Employee().is_authorized:
+            if is_logged_in and self.state_class is AuthorizedIdling:
                 logger.debug("local and global login statuses match. no discrepancy found.")
-            elif is_logged_in and not Employee().is_authorized:
+
+            elif is_logged_in and self.state_class is AwaitLogin:
                 logger.info("Employee is logged in on the backend. Logging in locally.")
                 employee_data: tp.Dict[str, str] = workbench_status["employee"]
-                Employee().log_in(employee_data["position"], employee_data["name"], "")
-            elif not is_logged_in and Employee().is_authorized:
+                self.state.start_shift(
+                    "", skip_request=True, position=employee_data["position"], name=employee_data["name"]
+                )
+
+            elif not is_logged_in and self.state_class is AuthorizedIdling:
                 logger.info("Employee is logged out on the backend. Logging out locally.")
-                Employee().log_out()
+                self.state.end_shift("", skip_card_check=True)
+
         except BackendUnreachableError:
             pass
+
         except Exception as E:
             logger.error(f"Login sync failed: {E}")
 

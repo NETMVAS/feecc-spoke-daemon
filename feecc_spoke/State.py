@@ -37,7 +37,13 @@ class State(ABC):
         raise NotImplementedError
 
     @tp.no_type_check
-    def start_shift(self, rfid_card_id: str) -> None:
+    def start_shift(
+        self,
+        rfid_card_id: str,
+        skip_request: bool = False,
+        name: tp.Optional[str] = None,
+        position: tp.Optional[str] = None,
+    ) -> None:
         """log employee in"""
         response_data: RequestPayload
         logger.info(f"Got login request. RFID Card ID: {rfid_card_id}")
@@ -52,14 +58,22 @@ class State(ABC):
                     "position": "Младший инженер",
                 },
             }
+        elif skip_request:
+            response_data = {
+                "status": True,
+                "employee_data": {
+                    "name": name,
+                    "position": position,
+                },
+            }
         else:
             response_data = self._send_log_in_request(rfid_card_id)
 
         # check if worker authorized and log him in
         if response_data["status"]:
-            name: str = str(response_data["employee_data"]["name"])
-            position: str = str(response_data["employee_data"]["position"])
-            Employee().log_in(position, name, rfid_card_id)
+            name_: str = str(response_data["employee_data"]["name"])
+            position_: str = str(response_data["employee_data"]["position"])
+            Employee().log_in(position_, name_, rfid_card_id)
             Display().render_view(Alerts.SuccessfulAuthorizationAlert)
             self.context.apply_state(AuthorizedIdling)
         else:
@@ -68,13 +82,13 @@ class State(ABC):
             Display().render_view(Views.LoginScreen)
 
     @tp.no_type_check
-    def end_shift(self, rfid_card_id: str) -> None:
+    def end_shift(self, rfid_card_id: str, skip_card_check: bool = False) -> None:
         """log employee out"""
 
         logger.info(f"Trying to logout employee with RFID card ID: {rfid_card_id}")
 
         try:
-            if not self._spoke.disable_id_validation:
+            if not self._spoke.disable_id_validation and not skip_card_check:
                 self._send_log_out_request()
 
             if any(
@@ -82,6 +96,7 @@ class State(ABC):
                     Employee().rfid_card_id == rfid_card_id,
                     not Employee().rfid_card_id,
                     self._spoke.disable_id_validation,
+                    skip_card_check,
                 )
             ):
                 Employee().log_out()
