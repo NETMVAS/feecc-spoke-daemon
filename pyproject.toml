@@ -17,6 +17,7 @@ Pillow-PIL = "^0.1dev"
 spidev = "^3.5"
 types-requests = "^2.25.0"
 types-PyYAML = "^5.4.3"
+loguru = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
@@ -41,4 +42,4 @@ module = "feecc_spoke.waveshare_epd.*"
 follow_imports = "skip"
 
 [tool.black]
-line-length = 100
+line-length = 120

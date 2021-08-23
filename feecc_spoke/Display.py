@@ -1,37 +1,41 @@
-import logging
 import typing as tp
+from collections import deque
 from threading import Thread
 from time import time
 
-from Types import Config
+from loguru import logger
+
 from .Employee import Employee
-from .Spoke import Spoke
+from .Types import Config
 from .ViewBase import View
 from .Views import BlankScreen
+from ._Singleton import SingletonMeta
 
 try:
     from .waveshare_epd import epd2in13d, epdconfig
 except Exception as E:
-    logging.error(f"Couldn't import EPD library: {E}")
+    logger.error(f"Couldn't import EPD library: {E}")
 
 
-class Display:
+class Display(metaclass=SingletonMeta):
     """the context class. handles hardware display operation and view management"""
 
-    def __init__(self, associated_worker: Employee, associated_spoke: Spoke) -> None:
-        self.associated_worker: Employee = associated_worker
-        self.associated_spoke: Spoke = associated_spoke
+    def __init__(self) -> None:
+        from .Spoke import Spoke
+
+        self.associated_worker: Employee = Employee()
+        self.associated_spoke: Spoke = Spoke()
         self.spoke_config: Config = self.associated_spoke.config
         self.epd: tp.Optional[epd2in13d.EPD] = None
 
         try:
             self.epd = epd2in13d.EPD()
-        except Exception as e:
-            logging.warning("E-ink display initialization failed. Fallback to headless mode.")
-            logging.debug(e)
+        except Exception as E:
+            logger.warning("E-ink display initialization failed. Fallback to headless mode.")
+            logger.debug(E)
 
         self.current_view: tp.Optional[View] = None
-        self._view_queue: tp.List[tp.Type[View]] = []
+        self._view_queue: tp.Deque[tp.Type[View]] = deque()
         self._display_thread: tp.Optional[Thread] = None
 
         # clear the screen at the first start in case it has leftover images on it
@@ -40,6 +44,10 @@ class Display:
     @property
     def _headless_mode(self) -> bool:
         return any((self.epd is None, self.spoke_config["screen"]["enforce_headless"]))
+
+    @property
+    def current_view_class(self) -> tp.Optional[tp.Type[View]]:
+        return self.current_view.__class__ if self.current_view else None
 
     @property
     def _display_busy(self) -> bool:
@@ -60,28 +68,28 @@ class Display:
             return
         # put the view into queue for rendering if it it is not duplicate
         if self._view_queue and self._view_queue[-1] == view:
-            logging.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
+            logger.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
             return
         elif self.current_view.__class__ == view and not self._view_queue:
-            logging.debug(f"View {view.__name__} is currently on the display. Dropping task.")
-            return
-        else:
-            logging.debug(f"View {view.__name__} staged for rendering")
-            self._view_queue.append(view)
+            logger.warning(f"View {view.__name__} is currently on the display. Dropping task.")
+
+        logger.debug(f"View {view.__name__} staged for rendering")
+        self._view_queue.append(view)
+
         # only start a new thread if there's no ongoing rendering process
         if not self._display_busy:
             self._display_thread = Thread(target=self._render_view_queue)
             self._display_thread.start()
-            logging.debug(f"New queue rendering thread started: {repr(self._display_thread)}")
+            logger.debug(f"New queue rendering thread started: {repr(self._display_thread)}")
 
     def _render_view_queue(self) -> None:
         """render all pending views one by one"""
         while self._view_queue:
-            pending_view: tp.Type[View] = self._view_queue.pop(0)
+            pending_view: tp.Type[View] = self._view_queue.popleft()
             view: View = pending_view(self)
             self.current_view = view
-            logging.info(f"Rendering view {view.name}")
+            logger.info(f"Rendering view {view.name}")
             start_time: float = time()
             view.display()
             end_time: float = time()
-            logging.debug(f"View '{view.name}' displayed in {round(end_time-start_time, 3)} s.")
+            logger.debug(f"View '{view.name}' displayed in {round(end_time-start_time, 3)} s.")

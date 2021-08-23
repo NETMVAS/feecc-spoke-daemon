@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
     # commands to execute
     commands: tp.List[str] = [
-        "poetry install --no-dev --no-interaction",  # install dependencies using poetry
         f"sudo cp {systemd_service} /etc/systemd/system/",
         "sudo systemctl daemon-reload",
         f"sudo systemctl enable {systemd_service}",

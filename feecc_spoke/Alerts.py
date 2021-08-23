@@ -4,11 +4,11 @@ import typing as tp
 
 from PIL import ImageFont
 
-from .ViewBase import Alert, FONT_PATH, Icon, SMALL_FONT_SIZE
+from .ViewBase import FONT_PATH, SMALL_FONT_SIZE, Alert, Icon
 
 if tp.TYPE_CHECKING:
+    from .Display import Display
     from PIL.ImageFont import FreeTypeFont
-    from Display import Display
 
 
 class FailedAuthorizationAlert(Alert):
@@ -102,4 +102,13 @@ class BackendUnreachableAlert(Alert):
     def __init__(self, context: Display) -> None:
         image_path: str = Icon.warning
         alert_message: str = "Нет связи\nс сервером"
+        super().__init__(context, image_path, alert_message)
+
+
+class OperationForbiddenAlert(Alert):
+    """display a message about forbidden state transition"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.warning
+        alert_message: str = "Операция\nне позволена"
         super().__init__(context, image_path, alert_message)

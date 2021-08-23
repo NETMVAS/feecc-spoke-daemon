@@ -1,16 +1,16 @@
-import logging
 from datetime import datetime as dt
 
+from loguru import logger
 from PIL import Image, ImageDraw
 
-from .ViewBase import BG_COLOR, Icon, MAIN_COLOR, View
+from .ViewBase import BG_COLOR, MAIN_COLOR, Icon, View
 
 
 class LoginScreen(View):
     """displays login screen"""
 
     def display(self) -> None:
-        logging.info("Display login screen")
+        logger.info("Display login screen")
 
         # init image
         login_screen = self._get_image()
@@ -30,9 +30,7 @@ class LoginScreen(View):
 
         # draw the message
         message = "Приложите\nпропуск\nк сканеру"
-        login_screen_draw.text(
-            (35 + 50 + 10, block_start), message, font=self._font_s, fill=MAIN_COLOR
-        )
+        login_screen_draw.text((35 + 50 + 10, block_start), message, font=self._font_s, fill=MAIN_COLOR)
 
         # draw the footer
         footer = f"spoke no.{self._display.spoke_config['general']['workbench_no']}"
@@ -53,7 +51,7 @@ class OngoingOperationScreen(View):
     """Displays the assembly timer"""
 
     def display(self) -> None:
-        logging.info("Display assembly timer")
+        logger.info("Display assembly timer")
         time_image = self._get_image()
         time_draw = ImageDraw.Draw(time_image)
 
@@ -90,8 +88,8 @@ class BlankScreen(View):
     """used to clear the screen before and after usage"""
 
     def display(self) -> None:
-        logging.info("Clearing the screen")
+        logger.info("Clearing the screen")
         self._epd.init()
         self._epd.Clear(0x00)  # fill with black to remove stuck pixels
         self._epd.Clear(0xFF)  # fill with white
-        logging.debug("Finished clearing the screen")
+        logger.debug("Finished clearing the screen")
