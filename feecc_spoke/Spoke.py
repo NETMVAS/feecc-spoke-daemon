@@ -201,3 +201,4 @@ class Spoke(metaclass=SingletonMeta):
                 f"Nothing to do for unit with int. id {barcode_string}. Ignoring event since no one is authorized."
             )
             Display().render_view(Alerts.AuthorizeFirstAlert)
+            Display().render_view(Views.LoginScreen)
