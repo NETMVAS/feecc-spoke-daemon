@@ -144,51 +144,78 @@ class Alert(View):
         context: Display,
         image_path: str,
         alert_message: str,
-        footer: tp.Optional[str] = None,
         font: tp.Optional[FreeTypeFont] = None,
         onscreen_time: tp.Optional[int] = None,
     ) -> None:
         super().__init__(context)
         self._image_path: str = image_path
         self._message: str = alert_message
-        self._footer: tp.Optional[str] = footer or None
         self._font: FreeTypeFont = font or self._font_m
         self._onscreen_time: int = onscreen_time or ALERT_DISPLAY_TIME
 
     def display(self) -> None:
-        # init image
-        alert_screen = self._get_image()
-        alert_draw = ImageDraw.Draw(alert_screen)
+        alert_image = self._get_image()
+        alert_image = self._draw_alert_icon(alert_image, self._image_path)
+        alert_image = self._draw_alert_message(alert_image, self._message)
+        self._render_image(alert_image)
+        sleep(self._onscreen_time)
 
-        # draw the icon
-        icon = Image.open(self._image_path)
+    def _draw_alert_icon(self, image: Image, image_path: str) -> Image:
+        """draw the icon"""
+        icon = Image.open(image_path)
         img_w, img_h = (50, 50)
         icon = icon.resize((img_w, img_h))
-        alert_screen.paste(icon, (20, int((self._height - img_h) / 2)))
+        image.paste(icon, (20, int((self._height - img_h) / 2)))
+        return image
 
-        # draw the alert message
-        message: str = self._message
+    def _draw_alert_message(self, image: Image, message: str, img_w: int = 50) -> Image:
+        """draw the alert message"""
+        draw = ImageDraw.Draw(image)
         _, txt_h = self._align_center(message, self._font)
         text_position = 20 + img_w + 10, txt_h
-        alert_draw.text(text_position, message, font=self._font, fill=MAIN_COLOR, align="center")
+        draw.text(text_position, message, font=self._font, fill=MAIN_COLOR, align="center")
+        return image
 
-        # draw the footer
-        if self._footer is not None:
-            font = self._font_s
-            footer = self._ensure_fitting(self._footer, font, 10)
-            lines: int = footer.count("\n") + 1
-            logger.debug(f"Alert footer: {footer} ({lines} lines)")
-            footer_w, _ = self._align_center(footer, font=font)
-            _, footer_h = alert_draw.textsize(message, font)
-            if lines > 1:
-                _, offset_h = font.getoffset(message)
-                footer_h += offset_h
-            footer_position = footer_w, self._height - footer_h
-            alert_draw.text(footer_position, footer, font=font, fill=MAIN_COLOR, align="center")
 
-        # display the image
-        self._render_image(alert_screen)
+class AlertWithFooter(Alert):
+    """an alert with a footer message"""
+
+    def __init__(
+        self,
+        context: Display,
+        image_path: str,
+        alert_message: str,
+        footer: str,
+        font: tp.Optional[FreeTypeFont] = None,
+        onscreen_time: tp.Optional[int] = None,
+    ) -> None:
+        super().__init__(context, image_path, alert_message, font, onscreen_time)
+        self._footer: str = footer
+
+    def display(self) -> None:
+        alert_image = self._get_image()
+        alert_image = self._draw_alert_icon(alert_image, self._image_path)
+        alert_image = self._draw_alert_message(alert_image, self._message)
+        alert_image = self._draw_footer(alert_image, self._footer)
+        self._render_image(alert_image)
         sleep(self._onscreen_time)
+
+    def _draw_footer(self, image: Image, footer: str) -> Image:
+        """draw the footer message"""
+        draw = ImageDraw.Draw(image)
+        font = self._font_s
+        footer = self._ensure_fitting(footer, font, 10)
+        message = self._message
+        lines: int = footer.count("\n") + 1
+        logger.debug(f"Alert footer: {footer} ({lines} lines)")
+        footer_w, _ = self._align_center(footer, font=font)
+        _, footer_h = draw.textsize(message, font)
+        if lines > 1:
+            _, offset_h = font.getoffset(message)
+            footer_h += offset_h
+        footer_position = footer_w, self._height - footer_h
+        draw.text(footer_position, footer, font=font, fill=MAIN_COLOR, align="center")
+        return image
 
 
 @dataclass(frozen=True)

@@ -4,7 +4,7 @@ import typing as tp
 
 from PIL import ImageFont
 
-from .ViewBase import FONT_PATH, SMALL_FONT_SIZE, Alert, Icon
+from .ViewBase import Alert, AlertWithFooter, FONT_PATH, Icon, SMALL_FONT_SIZE
 
 if tp.TYPE_CHECKING:
     from .Display import Display
@@ -77,14 +77,14 @@ class AuthorizeFirstAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
-class ScanBarcodeAlert(Alert):
+class ScanBarcodeAlert(AlertWithFooter):
     """displays the barcode scan prompt"""
 
     def __init__(self, context: Display) -> None:
         image_path: str = Icon.barcode_scanner
         alert_message: str = "Сканируйте\nштрихкод"
         footer: str = f"Авторизован {context.associated_worker.short_name}"
-        super().__init__(context, image_path, alert_message, footer=footer, onscreen_time=0)
+        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
 
 
 class IdMismatchAlert(Alert):
