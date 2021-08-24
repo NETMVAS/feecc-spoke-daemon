@@ -67,7 +67,10 @@ class State(ABC):
                 },
             }
         else:
-            response_data = self._send_log_in_request(rfid_card_id)
+            try:
+                response_data = self._send_log_in_request(rfid_card_id)
+            except BackendUnreachableError:
+                return
 
         # check if worker authorized and log him in
         if response_data["status"]:
