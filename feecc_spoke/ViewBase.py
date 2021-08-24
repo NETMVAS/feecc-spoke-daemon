@@ -228,3 +228,4 @@ class Icon:
     warning: str = f"{_icon_dir}/warning.png"
     rfid: str = f"{_icon_dir}/rfid.png"
     barcode_scanner: str = f"{_icon_dir}/barcode.png"
+    qrcode: str = f"{_icon_dir}/qrcode.png"

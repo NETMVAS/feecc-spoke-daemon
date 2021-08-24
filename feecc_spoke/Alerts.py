@@ -112,3 +112,32 @@ class OperationForbiddenAlert(Alert):
         image_path: str = Icon.warning
         alert_message: str = "Операция\nне позволена"
         super().__init__(context, image_path, alert_message)
+
+
+class InvalidQrAlert(Alert):
+    """display a message warning that this is not a valid QR code"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.warning
+        alert_message: str = "Это не\nQR код"
+        super().__init__(context, image_path, alert_message)
+
+
+class ScanModule1Qr(AlertWithFooter):
+    """display a message about needed to scan a QR code for the module 1"""
+
+    def __init__(self, context) -> None:
+        image_path: str = Icon.qrcode
+        alert_message: str = "Сканируйте\nQR код"
+        footer: str = f"Сканируйте QR код подсборки 1"
+        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
+
+
+class ScanModule2Qr(AlertWithFooter):
+    """display a message about needed to scan a QR code for the module 2"""
+
+    def __init__(self, context) -> None:
+        image_path: str = Icon.qrcode
+        alert_message: str = "Сканируйте\nQR код"
+        footer: str = f"Сканируйте QR код подсборки 2"
+        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
