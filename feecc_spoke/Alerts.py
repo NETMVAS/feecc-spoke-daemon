@@ -142,6 +142,15 @@ class InvalidQrAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
+class InvalidBarcodeAlert(Alert):
+    """display a message warning that this is not a valid barcode"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.warning
+        alert_message: str = "Это не\nштрихкод"
+        super().__init__(context, image_path, alert_message)
+
+
 class ScanNextModuleQr(Alert):
     """display a message about needed to scan a QR code for the module"""
 

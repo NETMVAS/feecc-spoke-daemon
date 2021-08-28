@@ -225,7 +225,15 @@ class Spoke(metaclass=SingletonMeta):
                 self.state.start_operation_on_existing_unit(barcode_string, additional_info)
         elif self.state_class is ProductionStageOngoing:
             logger.info(f"Ending an operation for unit with int. id {barcode_string}")
-            self.state.end_operation(barcode_string, additional_info)
+            if self._is_a_ean13_barcode(barcode_string):
+                self.state.end_operation(barcode_string, additional_info)
+            else:
+                Display().render_view(Alerts.InvalidBarcodeAlert)
+                if self.create_new_unit:
+                    Display().render_view(Alerts.ScanQrCodeAlert)
+                else:
+                    Display().render_view(Alerts.ScanBarcodeAlert)
+
         else:
             logger.error(
                 f"Nothing to do for unit with int. id {barcode_string}. Ignoring event since no one is authorized."
@@ -235,5 +243,10 @@ class Spoke(metaclass=SingletonMeta):
 
     @staticmethod
     def _is_a_barcode(string: str) -> bool:
+        """define if the barcode scanner input is barcode"""
+        return bool(re.fullmatch("\d+", string))
+
+    @staticmethod
+    def _is_a_ean13_barcode(string: str) -> bool:
         """define if the barcode scanner input is a valid EAN13 barcode"""
         return bool(re.fullmatch("\d{13}", string))
