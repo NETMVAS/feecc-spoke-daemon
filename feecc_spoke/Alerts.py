@@ -142,11 +142,10 @@ class InvalidQrAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
-class ScanModuleQr(AlertWithFooter):
+class ScanNextModuleQr(Alert):
     """display a message about needed to scan a QR code for the module"""
 
-    def __init__(self, context: Display, module_name: str) -> None:
+    def __init__(self, context: Display) -> None:
         image_path: str = Icon.qrcode
-        alert_message: str = "Сканируйте\nQR код"
-        footer: str = f'Сканируйте QR код модуля "{module_name}"'
-        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
+        alert_message: str = "Сканируйте\nследующий\nQR код"
+        super().__init__(context, image_path, alert_message, onscreen_time=0)

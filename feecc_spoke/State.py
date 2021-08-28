@@ -132,11 +132,17 @@ class State(ABC):
                 self.context.apply_state(AwaitLogin)
             else:
                 Display().render_view(Alerts.IdMismatchAlert)
-                Display().render_view(Alerts.ScanBarcodeAlert)
+                if self._spoke.create_new_unit:
+                    Display().render_view(Alerts.ScanQrCodeAlert)
+                else:
+                    Display().render_view(Alerts.ScanBarcodeAlert)
 
         except BackendUnreachableError as E:
             logger.error(f"Backend unreachable: {E}")
-            Display().render_view(Alerts.ScanBarcodeAlert)
+            if self._spoke.create_new_unit:
+                Display().render_view(Alerts.ScanQrCodeAlert)
+            else:
+                Display().render_view(Alerts.ScanBarcodeAlert)
 
     @tp.no_type_check
     def start_operation_on_existing_unit(self, unit_internal_id: str, additional_info: AddInfo = None) -> None:
@@ -156,7 +162,10 @@ class State(ABC):
                 if not response["status"]:
                     logger.error(response)
                     Display().render_view(Alerts.UnitNotFoundAlert)
-                    Display().render_view(Alerts.ScanBarcodeAlert)
+                    if self._spoke.create_new_unit:
+                        Display().render_view(Alerts.ScanQrCodeAlert)
+                    else:
+                        Display().render_view(Alerts.ScanBarcodeAlert)
                     return
             except BackendUnreachableError as E:
                 logger.error(f"Backend unreachable: {E}")
@@ -289,7 +298,10 @@ class AuthorizedIdling(State):
     """State when an employee was authorized at the workbench but doing nothing"""
 
     def perform_on_apply(self) -> None:
-        Display().render_view(Alerts.ScanBarcodeAlert)
+        if self._spoke.create_new_unit:
+            Display().render_view(Alerts.ScanQrCodeAlert)
+        else:
+            Display().render_view(Alerts.ScanBarcodeAlert)
 
     def start_shift(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot log in: a worker is already logged in at the workbench."

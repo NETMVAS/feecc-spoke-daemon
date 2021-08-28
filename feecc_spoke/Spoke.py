@@ -35,6 +35,10 @@ class Spoke(metaclass=SingletonMeta):
         return self.associated_unit_internal_id is not None
 
     @property
+    def create_new_unit(self) -> bool:
+        return bool(self.config["general"]["create_new_unit"])
+
+    @property
     def number(self) -> int:
         workbench_no: int = int(self.config["general"]["workbench_no"])
         return workbench_no
@@ -121,7 +125,10 @@ class Spoke(metaclass=SingletonMeta):
             pass
         elif Employee().is_authorized:
             Display().render_view(Alerts.SuccessfulAuthorizationAlert)
-            Display().render_view(Alerts.ScanBarcodeAlert)
+            if self.create_new_unit:
+                Display().render_view(Alerts.ScanQrCodeAlert)
+            else:
+                Display().render_view(Alerts.ScanBarcodeAlert)
         else:
             Display().render_view(Views.LoginScreen)
 
@@ -194,7 +201,7 @@ class Spoke(metaclass=SingletonMeta):
         logger.debug(f"Handling barcode event. EAN: {barcode_string}, additional_info: {additional_info or 'is empty'}")
 
         if self.state_class is AuthorizedIdling:
-            if self.config["general"]["create_new_unit"]:
+            if self.create_new_unit:
                 logger.info(f"Handling QR Code event for {barcode_string}. Creating new unit in progress")
                 if self.state.buffer_ready:
                     qr_links = self.state.qr_buffer
@@ -202,9 +209,11 @@ class Spoke(metaclass=SingletonMeta):
                     self.state.create_unit_from_modules(qr_links)
                 elif self._is_a_barcode(barcode_string):
                     Display().render_view(Alerts.InvalidQrAlert)
-                    Display().render_view(Alerts.ScanBarcodeAlert)
+                    Display().render_view(Alerts.ScanQrCodeAlert)
                 else:
                     self.state.qr_buffer = barcode_string  # type: ignore
+                    Display().render_view(Alerts.ScanNextModuleQr)
+                    Display().render_view(Alerts.ScanQrCodeAlert)
 
             else:
                 logger.info(f"Starting an operation for unit with int. id {barcode_string}")
