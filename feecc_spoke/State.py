@@ -33,6 +33,7 @@ class State(ABC):
         if self.buffer_ready:
             buffer = copy(self._qr_buffer)
             self._qr_buffer = []
+            logger.debug("Returned values and emptied QR buffer")
             return buffer
 
         raise BufferUnfilledError(
@@ -42,6 +43,7 @@ class State(ABC):
 
     @qr_buffer.setter
     def qr_buffer(self, link: str) -> None:
+        logger.debug(f"Added link {link} to QR buffer")
         self._qr_buffer.append(link)
 
     @property
