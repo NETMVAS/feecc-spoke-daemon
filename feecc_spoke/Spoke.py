@@ -203,15 +203,20 @@ class Spoke(metaclass=SingletonMeta):
         if self.state_class is AuthorizedIdling:
             if self.create_new_unit:
                 logger.info(f"Handling QR Code event for {barcode_string}. Creating new unit in progress")
+
+                if self._is_a_barcode(barcode_string):
+                    Display().render_view(Alerts.InvalidQrAlert)
+                    Display().render_view(Alerts.ScanQrCodeAlert)
+                    return
+                else:
+                    self.state.qr_buffer = barcode_string  # type: ignore
+
                 if self.state.buffer_ready:
                     qr_links = self.state.qr_buffer
                     logger.info(f"Creating new unit featuring modules {qr_links}")
-                    self.state.create_unit_from_modules(qr_links)
-                elif self._is_a_barcode(barcode_string):
-                    Display().render_view(Alerts.InvalidQrAlert)
-                    Display().render_view(Alerts.ScanQrCodeAlert)
+                    unit_internal_id, module_passports = self.state.create_unit_from_modules(qr_links)
+                    self.state.start_operation_on_existing_unit(unit_internal_id, module_passports)
                 else:
-                    self.state.qr_buffer = barcode_string  # type: ignore
                     Display().render_view(Alerts.ScanNextModuleQr)
                     Display().render_view(Alerts.ScanQrCodeAlert)
 
