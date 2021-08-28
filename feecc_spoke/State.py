@@ -125,6 +125,7 @@ class State(ABC):
                 )
             ):
                 Employee().log_out()
+                self._qr_buffer = []
                 Display().render_view(Alerts.SuccessfulLogOutAlert)
                 self.context.apply_state(AwaitLogin)
             else:

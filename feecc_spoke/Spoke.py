@@ -177,12 +177,10 @@ class Spoke(metaclass=SingletonMeta):
         # resolve sync conflicts
         try:
             workbench_status: RequestPayload = self.workbench_status
-            if not Employee().is_authorized == workbench_status["employee_logged_in"]:
+            if Employee().is_authorized != workbench_status["employee_logged_in"]:
                 self.sync_login_status()
         except BackendUnreachableError as E:
             logger.error(f"Failed to handle RFID event: {E}, event: {event_dict}")
-            pass
-
         if self.state_class in [AuthorizedIdling, ProductionStageOngoing]:
             # if worker is logged in - log him out
             self.state.end_shift(event_dict["string"])
