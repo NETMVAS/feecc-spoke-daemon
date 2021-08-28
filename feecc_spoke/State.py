@@ -162,6 +162,7 @@ class State(ABC):
 
         self.context.apply_state(ProductionStageOngoing)
 
+    @tp.no_type_check
     def create_unit_from_modules(self, module_links: tp.List[str]) -> tp.Tuple[str, tp.Dict[str, str]]:
         """create a new unit featuring scanned module and start an operation on it"""
         config = self._spoke.config["new_unit_creation_settings"]
@@ -277,6 +278,10 @@ class AwaitLogin(State, ABC):
         msg: str = "Cannot end operation: no one is logged in at the workbench"
         self._state_forbidden(msg)
 
+    def create_unit_from_modules(self, *args: tp.Any, **kwargs: tp.Any) -> None:
+        msg: str = "Cannot create a new unit: no one is logged in at the workbench"
+        self._state_forbidden(msg, False)
+
 
 class AuthorizedIdling(State):
     """State when an employee was authorized at the workbench but doing nothing"""
@@ -310,4 +315,8 @@ class ProductionStageOngoing(State):
 
     def start_operation_on_existing_unit(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot start an operation: there is already an ongoing operation at the workbench."
+        self._state_forbidden(msg, False)
+
+    def create_unit_from_modules(self, *args: tp.Any, **kwargs: tp.Any) -> None:
+        msg: str = "Cannot create a new unit: there is already an ongoing operation at the workbench."
         self._state_forbidden(msg, False)
