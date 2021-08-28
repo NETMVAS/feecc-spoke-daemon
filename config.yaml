@@ -2,6 +2,13 @@ general: # miscellaneous parameters
   workbench_no: 2 # associated workbench number
   production_stage_name: "Assembly"
   send_upload_request: true
+  create_new_unit: false
+
+new_unit_creation_settings:
+  unit_type: "Криптоанализатор"
+  modules:
+    - Module name 1
+    - Module name 2
 
 endpoints:
   hub_socket: "http://192.168.88.254:5000" # hub api socket on the LAN

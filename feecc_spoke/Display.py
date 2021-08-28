@@ -35,7 +35,7 @@ class Display(metaclass=SingletonMeta):
             logger.debug(E)
 
         self.current_view: tp.Optional[View] = None
-        self._view_queue: tp.Deque[tp.Type[View]] = deque()
+        self._view_queue: tp.Deque[View] = deque()
         self._display_thread: tp.Optional[Thread] = None
 
         # clear the screen at the first start in case it has leftover images on it
@@ -61,19 +61,22 @@ class Display(metaclass=SingletonMeta):
             if self._display_thread is not None:
                 self._display_thread.join()
 
-    def render_view(self, view: tp.Type[View]) -> None:
+    def render_view(self, view: tp.Union[View, tp.Type[View]]) -> None:
         """handle rendering a view in a separate thread"""
         # drop render task if in headless mode
         if self._headless_mode:
             return
+
+        # instantiate view if not initialised
+        if not isinstance(view, View):
+            view = view(self)
+
         # put the view into queue for rendering if it it is not duplicate
         if self._view_queue and self._view_queue[-1] == view:
-            logger.debug(f"View {view.__name__} is already pending rendering. Dropping task.")
+            logger.debug(f"View {view.__class__.__name__} is already pending rendering. Dropping task.")
             return
-        elif self.current_view.__class__ == view and not self._view_queue:
-            logger.warning(f"View {view.__name__} is currently on the display. Dropping task.")
 
-        logger.debug(f"View {view.__name__} staged for rendering")
+        logger.debug(f"View {view.__class__.__name__} staged for rendering")
         self._view_queue.append(view)
 
         # only start a new thread if there's no ongoing rendering process
@@ -85,8 +88,7 @@ class Display(metaclass=SingletonMeta):
     def _render_view_queue(self) -> None:
         """render all pending views one by one"""
         while self._view_queue:
-            pending_view: tp.Type[View] = self._view_queue.popleft()
-            view: View = pending_view(self)
+            view: View = self._view_queue.popleft()
             self.current_view = view
             logger.info(f"Rendering view {view.name}")
             start_time: float = time()

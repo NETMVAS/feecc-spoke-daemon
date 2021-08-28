@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import copy
 import typing as tp
 from abc import ABC, abstractmethod
 
@@ -9,7 +10,7 @@ from loguru import logger
 from . import Alerts, ViewBase, Views
 from .Display import Display
 from .Employee import Employee
-from .Exceptions import BackendUnreachableError, StateForbiddenError
+from .Exceptions import BackendUnreachableError, BufferUnfilledError, StateForbiddenError, FailedToCreateUnitError
 from .Types import AddInfo, RequestPayload
 
 if tp.TYPE_CHECKING:
@@ -21,6 +22,27 @@ class State(ABC):
 
     def __init__(self, spoke: Spoke) -> None:
         self._spoke: Spoke = spoke
+        self._qr_buffer: tp.List[str] = []
+
+    @property
+    def buffer_ready(self) -> bool:
+        return len(self._spoke.config["new_unit_creation_settings"]["modules"]) == len(self.qr_buffer)
+
+    @property
+    def qr_buffer(self) -> tp.List[str]:
+        if self.buffer_ready:
+            buffer = copy(self._qr_buffer)
+            self._qr_buffer = []
+            return buffer
+
+        raise BufferUnfilledError(
+            f"Buffer is not fully filled. Progress: "
+            f"{len(self._qr_buffer)}/{len(self._spoke.config['new_unit_creation_settings']['modules'])}"
+        )
+
+    @qr_buffer.setter
+    def qr_buffer(self, link: str) -> None:
+        self._qr_buffer.append(link)
 
     @property
     def context(self) -> Spoke:
@@ -114,16 +136,16 @@ class State(ABC):
             Display().render_view(Alerts.ScanBarcodeAlert)
 
     @tp.no_type_check
-    def start_operation(self, barcode_string: str, additional_info: AddInfo = None) -> None:
+    def start_operation_on_existing_unit(self, unit_internal_id: str, additional_info: AddInfo = None) -> None:
         """send a request to start operation on the provided unit"""
-        self._spoke.associated_unit_internal_id = barcode_string
+        self._spoke.associated_unit_internal_id = unit_internal_id
 
         if not self._spoke.disable_barcode_validation:
-            url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/start"
+            url = f"{self._spoke.hub_url}/api/unit/{unit_internal_id}/start"
             payload = {
                 "workbench_no": self._spoke.number,
                 "production_stage_name": self._spoke.config["general"]["production_stage_name"],
-                "additional_info": additional_info if additional_info else {},
+                "additional_info": additional_info or {},
             }
 
             try:
@@ -139,6 +161,30 @@ class State(ABC):
 
         self.context.apply_state(ProductionStageOngoing)
 
+    def create_unit_from_modules(self, module_links: tp.List[str]) -> tp.Tuple[str, tp.Dict[str, str]]:
+        """create a new unit featuring scanned module and start an operation on it"""
+        config = self._spoke.config["new_unit_creation_settings"]
+
+        # create new unit
+        url: str = f"{self._spoke.hub_url}/api/unit/new"
+        payload: tp.Dict[str, str] = {"unit_type": config["unit_type"]}
+        response: RequestPayload = self._send_request_to_backend(url, payload)
+        if not response["status"]:
+            message = f"Error creating new unit: {response['comment']}"
+            logger.error(message)
+            Display().render_view(Alerts.CannotCreateUnitAlert)
+            Display().render_view(Alerts.ScanQrCodeAlert)
+            raise FailedToCreateUnitError(message)
+        unit_internal_id: str = response["unit_internal_id"]
+
+        # gather all modules
+        modules: tp.List[str] = self._spoke.config["new_unit_creation_settings"]["modules"]
+        module_passports: tp.Dict[str, str] = {}
+        for module_name, module_passport_url in zip(modules, module_links):
+            module_passports[module_name] = module_passport_url
+
+        return unit_internal_id, module_passports
+
     @tp.no_type_check
     def end_operation(self, barcode_string: str, additional_info: AddInfo = None):
         """send a request to end operation on the provided unit"""
@@ -149,7 +195,7 @@ class State(ABC):
         url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/end"
         payload = {
             "workbench_no": self._spoke.number,
-            "additional_info": additional_info if additional_info else {},
+            "additional_info": additional_info or {},
         }
         try:
             self._send_request_to_backend(url, payload)
@@ -222,7 +268,7 @@ class AwaitLogin(State, ABC):
         msg: str = "Cannot log out: no one is logged in at the workbench."
         self._state_forbidden(msg)
 
-    def start_operation(self, *args: tp.Any, **kwargs: tp.Any) -> None:
+    def start_operation_on_existing_unit(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot start operation: no one is logged in at the workbench"
         self._state_forbidden(msg)
 
@@ -261,6 +307,6 @@ class ProductionStageOngoing(State):
         msg: str = "Cannot log out: there is an ongoing operation at the workbench."
         self._state_forbidden(msg, False)
 
-    def start_operation(self, *args: tp.Any, **kwargs: tp.Any) -> None:
+    def start_operation_on_existing_unit(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         msg: str = "Cannot start an operation: there is already an ongoing operation at the workbench."
         self._state_forbidden(msg, False)

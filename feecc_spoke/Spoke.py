@@ -196,8 +196,21 @@ class Spoke(metaclass=SingletonMeta):
         logger.debug(f"Handling barcode event. EAN: {barcode_string}, additional_info: {additional_info or 'is empty'}")
 
         if self.state_class is AuthorizedIdling:
-            logger.info(f"Starting an operation for unit with int. id {barcode_string}")
-            self.state.start_operation(barcode_string, additional_info)
+            if self.config["general"]["create_new_unit"]:
+                logger.info(f"Handling QR Code event for {barcode_string}. Creating new unit in progress")
+                if self.state.buffer_ready:
+                    qr_links = self.state.qr_buffer
+                    logger.info(f"Creating new unit featuring modules {qr_links}")
+                    self.state.create_unit_from_modules(qr_links)
+                elif self._is_a_barcode(barcode_string):
+                    Display().render_view(Alerts.InvalidQrAlert)
+                    Display().render_view(Alerts.ScanBarcodeAlert)
+                else:
+                    self.state.qr_buffer = barcode_string  # type: ignore
+
+            else:
+                logger.info(f"Starting an operation for unit with int. id {barcode_string}")
+                self.state.start_operation_on_existing_unit(barcode_string, additional_info)
         elif self.state_class is ProductionStageOngoing:
             logger.info(f"Ending an operation for unit with int. id {barcode_string}")
             self.state.end_operation(barcode_string, additional_info)
@@ -207,3 +220,8 @@ class Spoke(metaclass=SingletonMeta):
             )
             Display().render_view(Alerts.AuthorizeFirstAlert)
             Display().render_view(Views.LoginScreen)
+
+    @staticmethod
+    def _is_a_barcode(string: str) -> bool:
+        """define if the barcode scanner input is a valid EAN13 barcode"""
+        return bool(re.fullmatch("\d{13}", string))

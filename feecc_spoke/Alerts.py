@@ -87,6 +87,16 @@ class ScanBarcodeAlert(AlertWithFooter):
         super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
 
 
+class ScanQrCodeAlert(AlertWithFooter):
+    """displays the qr code scan prompt"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.qrcode
+        alert_message: str = "Сканируйте\nQR код"
+        footer: str = f"Авторизован {context.associated_worker.short_name}"
+        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
+
+
 class IdMismatchAlert(Alert):
     """display a message about mismatched id (forbidden log out operation)"""
 
@@ -102,6 +112,15 @@ class BackendUnreachableAlert(Alert):
     def __init__(self, context: Display) -> None:
         image_path: str = Icon.warning
         alert_message: str = "Нет связи\nс сервером"
+        super().__init__(context, image_path, alert_message)
+
+
+class CannotCreateUnitAlert(Alert):
+    """display a message about inability to create a new unit"""
+
+    def __init__(self, context: Display) -> None:
+        image_path: str = Icon.warning
+        alert_message: str = "Не удалось\nсоздать изделие"
         super().__init__(context, image_path, alert_message)
 
 
@@ -123,21 +142,11 @@ class InvalidQrAlert(Alert):
         super().__init__(context, image_path, alert_message)
 
 
-class ScanModule1Qr(AlertWithFooter):
-    """display a message about needed to scan a QR code for the module 1"""
+class ScanModuleQr(AlertWithFooter):
+    """display a message about needed to scan a QR code for the module"""
 
-    def __init__(self, context) -> None:
+    def __init__(self, context: Display, module_name: str) -> None:
         image_path: str = Icon.qrcode
         alert_message: str = "Сканируйте\nQR код"
-        footer: str = f"Сканируйте QR код подсборки 1"
-        super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
-
-
-class ScanModule2Qr(AlertWithFooter):
-    """display a message about needed to scan a QR code for the module 2"""
-
-    def __init__(self, context) -> None:
-        image_path: str = Icon.qrcode
-        alert_message: str = "Сканируйте\nQR код"
-        footer: str = f"Сканируйте QR код подсборки 2"
+        footer: str = f'Сканируйте QR код модуля "{module_name}"'
         super().__init__(context, image_path, alert_message, footer, onscreen_time=0)
