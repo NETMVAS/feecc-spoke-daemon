@@ -26,7 +26,7 @@ class State(ABC):
 
     @property
     def buffer_ready(self) -> bool:
-        return len(self._spoke.config["new_unit_creation_settings"]["modules"]) == len(self.qr_buffer)
+        return len(self._spoke.config["new_unit_creation_settings"]["modules"]) == len(self._qr_buffer)
 
     @property
     def qr_buffer(self) -> tp.List[str]:
