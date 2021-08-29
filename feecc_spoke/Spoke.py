@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-import os
-import re
-import subprocess
-import sys
 import threading
 import typing as tp
 from random import randint
 
 import requests
-import yaml
 from loguru import logger
 
-from . import Alerts, Views
+from . import Alerts, Views, utils
 from .Display import Display
 from .Employee import Employee
 from .Exceptions import BackendUnreachableError
@@ -25,44 +20,26 @@ class Spoke(metaclass=SingletonMeta):
     """stores device's status and operational data"""
 
     def __init__(self) -> None:
-        self.config: Config = self._get_config()
+        # core attributes
+        self.config: Config = utils.get_config()
         self.associated_unit_internal_id: tp.Optional[str] = None
         self.state: State = AwaitLogin(self)
         self._state_thread_list: tp.List[threading.Thread] = []
+
+        # shortcuts to various config parameters
+        self.create_new_unit: bool = bool(self.config["general"]["create_new_unit"])
+        self.workbench_number: int = int(self.config["general"]["workbench_no"])
+        self.hub_url: str = str(self.config["endpoints"]["hub_socket"])
+        self.disable_barcode_validation: bool = bool(self.config["developer"]["disable_barcode_validation"])
+        self.disable_id_validation: bool = bool(self.config["developer"]["disable_id_validation"])
 
     @property
     def operation_ongoing(self) -> bool:
         return self.associated_unit_internal_id is not None
 
     @property
-    def create_new_unit(self) -> bool:
-        return bool(self.config["general"]["create_new_unit"])
-
-    @property
-    def number(self) -> int:
-        workbench_no: int = int(self.config["general"]["workbench_no"])
-        return workbench_no
-
-    @property
-    def hub_url(self) -> str:
-        hub_socket: str = str(self.config["endpoints"]["hub_socket"])
-        return hub_socket
-
-    @property
-    def ipv4(self) -> tp.Optional[str]:
-        """gets device's own ipv4 address on the local network"""
-        try:
-            command = "ip address | grep 192.168"
-            output: str = subprocess.check_output(command, shell=True, text=True)
-            ip_addresses: tp.List[str] = re.findall("192.168.\d+.\d+", output)
-            return ip_addresses[0] if ip_addresses else None
-        except Exception as E:
-            logger.error(f"An error occurred while retrieving own ipv4: {E}")
-            return None
-
-    @property
     def workbench_status(self) -> RequestPayload:
-        url: str = f"{self.hub_url}/api/workbench/{self.number}/status"
+        url: str = f"{self.hub_url}/api/workbench/{self.workbench_number}/status"
         try:
             workbench_status: RequestPayload = requests.get(url, timeout=1).json()
             return workbench_status
@@ -72,25 +49,22 @@ class Spoke(metaclass=SingletonMeta):
             raise BackendUnreachableError(message)
 
     @property
-    def disable_id_validation(self) -> bool:
-        return bool(self.config["developer"]["disable_id_validation"])
+    def _state_thread(self) -> tp.Optional[threading.Thread]:
+        return self._state_thread_list[-1] if self._state_thread_list else None
+
+    @_state_thread.setter
+    def _state_thread(self, state_thread: threading.Thread) -> None:
+        self._state_thread_list.append(state_thread)
+        thread_list = self._state_thread_list
+        logger.debug(
+            f"Attribute _state_thread_list of WorkBench is now of len {len(thread_list)}:\n"
+            f"{[repr(t) for t in thread_list]}\n"
+            f"Threads alive: {list(filter(lambda t: t.is_alive(), thread_list))}"
+        )
 
     @property
-    def disable_barcode_validation(self) -> bool:
-        return bool(self.config["developer"]["disable_barcode_validation"])
-
-    @staticmethod
-    def _get_config(config_path: str = "config.yaml") -> Config:
-        """load up config file"""
-        if not os.path.exists(config_path):
-            logger.critical(f"Configuration file {config_path} doesn't exist. Exiting.")
-            sys.exit()
-
-        with open(config_path) as f:
-            content = f.read()
-            config_f: Config = yaml.load(content, Loader=yaml.SafeLoader)
-            logger.debug(f"Configuration dict: {config_f}")
-            return config_f
+    def state_class(self) -> tp.Type[State]:
+        return self.state.__class__
 
     def sync_login_status(self, no_feedback: bool = False) -> None:
         """resolve conflicts in login status between backend and local data"""
@@ -132,35 +106,15 @@ class Spoke(metaclass=SingletonMeta):
         else:
             Display().render_view(Views.LoginScreen)
 
-    def identify_sender(self, sender_device_name: str) -> str:
+    def identify_sender(self, sender_device_name: str) -> tp.Optional[str]:
         """identify, which device the input is coming from and if it is known return it's role"""
         known_hid_devices: tp.Dict[str, str] = self.config["known_hid_devices"]
-        sender = ""  # name of the sender device
 
         for sender_name, device_name in known_hid_devices.items():
             if device_name == sender_device_name:
-                sender = sender_name
-                break
+                return sender_name
 
-        return sender
-
-    @property
-    def _state_thread(self) -> tp.Optional[threading.Thread]:
-        return self._state_thread_list[-1] if self._state_thread_list else None
-
-    @_state_thread.setter
-    def _state_thread(self, state_thread: threading.Thread) -> None:
-        self._state_thread_list.append(state_thread)
-        thread_list = self._state_thread_list
-        logger.debug(
-            f"Attribute _state_thread_list of WorkBench is now of len {len(thread_list)}:\n"
-            f"{[repr(t) for t in thread_list]}\n"
-            f"Threads alive: {list(filter(lambda t: t.is_alive(), thread_list))}"
-        )
-
-    @property
-    def state_class(self) -> tp.Type[State]:
-        return self.state.__class__
+        return None
 
     def apply_state(self, state: tp.Type[State], *args: tp.Any, **kwargs: tp.Any) -> None:
         """execute provided state in the background"""
@@ -200,11 +154,12 @@ class Spoke(metaclass=SingletonMeta):
         """Barcode event handling"""
         logger.debug(f"Handling barcode event. EAN: {barcode_string}, additional_info: {additional_info or 'is empty'}")
 
+        # sequence to do if a worker is authorized but there's no ongoing operation
         if self.state_class is AuthorizedIdling:
             if self.create_new_unit:
                 logger.info(f"Handling QR Code event for {barcode_string}. Creating new unit in progress")
 
-                if self._is_a_barcode(barcode_string):
+                if utils.is_a_barcode(barcode_string):
                     Display().render_view(Alerts.InvalidQrAlert)
                     Display().render_view(Alerts.ScanQrCodeAlert)
                     return
@@ -223,9 +178,11 @@ class Spoke(metaclass=SingletonMeta):
             else:
                 logger.info(f"Starting an operation for unit with int. id {barcode_string}")
                 self.state.start_operation_on_existing_unit(barcode_string, additional_info)
+
+        # sequence to do if there is an ongoing operation
         elif self.state_class is ProductionStageOngoing:
             logger.info(f"Ending an operation for unit with int. id {barcode_string}")
-            if self._is_a_ean13_barcode(barcode_string):
+            if utils.is_a_ean13_barcode(barcode_string):
                 self.state.end_operation(barcode_string, additional_info)
             else:
                 Display().render_view(Alerts.InvalidBarcodeAlert)
@@ -234,19 +191,8 @@ class Spoke(metaclass=SingletonMeta):
                 else:
                     Display().render_view(Alerts.ScanBarcodeAlert)
 
+        # sequence to do if no one is authorized
         else:
-            logger.error(
-                f"Nothing to do for unit with int. id {barcode_string}. Ignoring event since no one is authorized."
-            )
+            logger.error(f"Received input {barcode_string}. Ignoring event since no one is authorized.")
             Display().render_view(Alerts.AuthorizeFirstAlert)
             Display().render_view(Views.LoginScreen)
-
-    @staticmethod
-    def _is_a_barcode(string: str) -> bool:
-        """define if the barcode scanner input is barcode"""
-        return bool(re.fullmatch("\d+", string))
-
-    @staticmethod
-    def _is_a_ean13_barcode(string: str) -> bool:
-        """define if the barcode scanner input is a valid EAN13 barcode"""
-        return bool(re.fullmatch("\d{13}", string))

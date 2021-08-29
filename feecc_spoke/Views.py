@@ -1,9 +1,10 @@
 from datetime import datetime as dt
 
-from loguru import logger
 from PIL import Image, ImageDraw
+from loguru import logger
 
-from .ViewBase import BG_COLOR, MAIN_COLOR, Icon, View
+from . import utils
+from .ViewBase import BG_COLOR, Icon, MAIN_COLOR, View
 
 
 class LoginScreen(View):
@@ -34,7 +35,7 @@ class LoginScreen(View):
 
         # draw the footer
         footer = f"spoke no.{self._display.spoke_config['general']['workbench_no']}"
-        ipv4 = self._display.associated_spoke.ipv4
+        ipv4 = utils.get_interface_ipv4()
 
         if ipv4 is not None:
             footer += f". IPv4: {ipv4}"

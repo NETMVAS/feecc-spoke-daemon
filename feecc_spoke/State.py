@@ -152,7 +152,7 @@ class State(ABC):
         if not self._spoke.disable_barcode_validation:
             url = f"{self._spoke.hub_url}/api/unit/{unit_internal_id}/start"
             payload = {
-                "workbench_no": self._spoke.number,
+                "workbench_no": self._spoke.workbench_number,
                 "production_stage_name": self._spoke.config["general"]["production_stage_name"],
                 "additional_info": additional_info or {},
             }
@@ -207,7 +207,7 @@ class State(ABC):
             return
         url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/end"
         payload = {
-            "workbench_no": self._spoke.number,
+            "workbench_no": self._spoke.workbench_number,
             "additional_info": additional_info or {},
         }
         try:
@@ -249,19 +249,19 @@ class State(ABC):
             raise BackendUnreachableError
 
     def _send_log_out_request(self) -> None:
-        payload = {"workbench_no": self._spoke.number}
+        payload = {"workbench_no": self._spoke.workbench_number}
         url = f"{self._spoke.hub_url}/api/employee/log-out"
         self._send_request_to_backend(url, payload)
 
     def _send_upload_request(self, unit_internal_id: str) -> RequestPayload:
         """send a request to upload the unit data"""
-        payload = {"workbench_no": self._spoke.number}
+        payload = {"workbench_no": self._spoke.workbench_number}
         url = f"{self._spoke.hub_url}/api/unit/{unit_internal_id}/upload"
         return self._send_request_to_backend(url, payload)
 
     def _send_log_in_request(self, rfid_card_no: str) -> RequestPayload:
         payload = {
-            "workbench_no": self._spoke.number,
+            "workbench_no": self._spoke.workbench_number,
             "employee_rfid_card_no": rfid_card_no,
         }
         url = f"{self._spoke.hub_url}/api/employee/log-in"
