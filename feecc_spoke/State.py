@@ -199,21 +199,25 @@ class State(ABC):
         return unit_internal_id, module_passports
 
     @tp.no_type_check
-    def end_operation(self, barcode_string: str, additional_info: AddInfo = None):
+    def end_operation(self, additional_info: AddInfo = None):
         """send a request to end operation on the provided unit"""
+        unit_internal_id: str = copy(self._spoke.associated_unit_internal_id)
         self._spoke.associated_unit_internal_id = None
+
         if self._spoke.disable_barcode_validation:
             self.context.apply_state(AuthorizedIdling)
             return
-        url = f"{self._spoke.hub_url}/api/unit/{barcode_string}/end"
+
+        url = f"{self._spoke.hub_url}/api/unit/{unit_internal_id}/end"
         payload = {
             "workbench_no": self._spoke.workbench_number,
             "additional_info": additional_info or {},
         }
+
         try:
             self._send_request_to_backend(url, payload)
             if self._spoke.config["general"]["send_upload_request"]:
-                self._send_upload_request(barcode_string)
+                self._send_upload_request(unit_internal_id)
             Display().render_view(Alerts.OperationEndedAlert)
             self.context.apply_state(AuthorizedIdling)
         except BackendUnreachableError as E:

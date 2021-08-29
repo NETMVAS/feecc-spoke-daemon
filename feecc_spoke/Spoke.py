@@ -156,9 +156,12 @@ class Spoke(metaclass=SingletonMeta):
 
         # sequence to do if a worker is authorized but there's no ongoing operation
         if self.state_class is AuthorizedIdling:
+
+            # create a new unit from submodules
             if self.create_new_unit:
                 logger.info(f"Handling QR Code event for {barcode_string}. Creating new unit in progress")
 
+                # check if it's a valid QR code link and add it to buffer. Display error otherwise.
                 if utils.is_a_barcode(barcode_string):
                     Display().render_view(Alerts.InvalidQrAlert)
                     Display().render_view(Alerts.ScanQrCodeAlert)
@@ -166,6 +169,7 @@ class Spoke(metaclass=SingletonMeta):
                 else:
                     self.state.qr_buffer = barcode_string  # type: ignore
 
+                # check if buffer has enough links in it and create the unit. Display prompt message otherwise.
                 if self.state.buffer_ready:
                     qr_links = self.state.qr_buffer
                     logger.info(f"Creating new unit featuring modules {qr_links}")
@@ -175,23 +179,21 @@ class Spoke(metaclass=SingletonMeta):
                     Display().render_view(Alerts.ScanNextModuleQr)
                     Display().render_view(Alerts.ScanQrCodeAlert)
 
-            else:
+            # start an operation on existing unit if it's a valid barcode
+            elif utils.is_a_ean13_barcode(barcode_string):
                 logger.info(f"Starting an operation for unit with int. id {barcode_string}")
                 self.state.start_operation_on_existing_unit(barcode_string, additional_info)
-
-        # sequence to do if there is an ongoing operation
-        elif self.state_class is ProductionStageOngoing:
-            logger.info(f"Ending an operation for unit with int. id {barcode_string}")
-            if utils.is_a_ean13_barcode(barcode_string):
-                self.state.end_operation(barcode_string, additional_info)
             else:
+                logger.warning(
+                    f"'{barcode_string}' is not a EAN13 barcode and cannot be an internal unit ID. Cannot start operation."
+                )
                 Display().render_view(Alerts.InvalidBarcodeAlert)
-                if self.create_new_unit:
-                    Display().render_view(Alerts.ScanQrCodeAlert)
-                else:
-                    Display().render_view(Alerts.ScanBarcodeAlert)
+                Display().render_view(Alerts.ScanBarcodeAlert)
 
-        # sequence to do if no one is authorized
+        elif self.state_class is ProductionStageOngoing:
+            logger.info(f"Ending an operation for unit with int. id {self.associated_unit_internal_id}")
+            self.state.end_operation(additional_info)
+
         else:
             logger.error(f"Received input {barcode_string}. Ignoring event since no one is authorized.")
             Display().render_view(Alerts.AuthorizeFirstAlert)
