@@ -8,9 +8,7 @@ SERVER_API_ADDRESS = "http://127.0.0.1:8080/api"
 
 
 @app.command()
-def rfid(
-    string: str = "1111111111", sender: str = "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader"
-) -> None:
+def rfid(string: str = "1111111111", sender: str = "Sycreader RFID Technology Co., Ltd SYC ID&IC USB Reader") -> None:
     """emulate rfid scanner event"""
     generic_hid_event(sender, string)
 
