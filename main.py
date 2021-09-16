@@ -1,4 +1,5 @@
 import atexit
+import typing as tp
 
 from flask import Flask, request
 from flask_restful import Api, Resource
@@ -39,13 +40,15 @@ class HidEventHandler(Resource):
         event_dict: RequestPayload = request.get_json()  # type: ignore
         logger.debug(f"Received event dict:\n{event_dict}")
         # handle the event in accord with it's source
-        sender = Spoke().identify_sender(event_dict["name"])
+        sender: tp.Optional[str] = Spoke().identify_sender(event_dict["name"])
+        string: str = event_dict["string"]
+        Spoke().hid_buffer = string
 
         try:
             if sender == "rfid_reader":
-                Spoke().handle_rfid_event(event_dict)
+                Spoke().handle_rfid_event(string)
             elif sender == "barcode_reader":
-                Spoke().handle_barcode_event(event_dict["string"])
+                Spoke().handle_barcode_event(string)
             else:
                 message: str = "Sender of the event dict is not mentioned in the config. Can't handle the request."
                 logger.error(message)
@@ -57,7 +60,21 @@ class HidEventHandler(Resource):
             return {"status": False, "comment": f"operation is forbidden by the state: {E}"}
 
 
+class LatestBufferEntry(Resource):
+    """Returns latest entry from the hid event buffer"""
+
+    @staticmethod
+    def get() -> RequestPayload:
+        """get latest buffer entry"""
+        return {
+            "status": True,
+            "comment": "Retrieved HID buffer",
+            "buffer": Spoke().hid_buffer,
+        }
+
+
 api.add_resource(HidEventHandler, "/api/hid_event")
+api.add_resource(LatestBufferEntry, "/api/hid_buffer")
 
 # daemon initialization
 if __name__ == "__main__":

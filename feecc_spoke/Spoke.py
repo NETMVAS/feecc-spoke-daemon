@@ -25,6 +25,7 @@ class Spoke(metaclass=SingletonMeta):
         self.associated_unit_internal_id: tp.Optional[str] = None
         self.state: State = AwaitLogin(self)
         self._state_thread_list: tp.List[threading.Thread] = []
+        self.hid_buffer: str = ""
 
         # shortcuts to various config parameters
         self.create_new_unit: bool = bool(self.config["general"]["create_new_unit"])
@@ -133,7 +134,7 @@ class Spoke(metaclass=SingletonMeta):
         )
         self._state_thread.start()
 
-    def handle_rfid_event(self, event_dict: RequestPayload) -> None:
+    def handle_rfid_event(self, string: str) -> None:
         """RFID event handling"""
         # resolve sync conflicts
         try:
@@ -141,13 +142,13 @@ class Spoke(metaclass=SingletonMeta):
             if Employee().is_authorized != workbench_status["employee_logged_in"]:
                 self.sync_login_status()
         except BackendUnreachableError as E:
-            logger.error(f"Failed to handle RFID event: {E}, event: {event_dict}")
+            logger.error(f"Failed to handle RFID event: {E}, string: {string}")
         if self.state_class in [AuthorizedIdling, ProductionStageOngoing]:
             # if worker is logged in - log him out
-            self.state.end_shift(event_dict["string"])
+            self.state.end_shift(string)
         elif self.state_class is AwaitLogin:
             # make a call to authorize the worker otherwise
-            rfid_card_id: str = str(event_dict["string"])
+            rfid_card_id: str = str(string)
             self.state.start_shift(rfid_card_id)
 
     def handle_barcode_event(self, barcode_string: str, additional_info: tp.Optional[AddInfo] = None) -> None:
