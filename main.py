@@ -44,7 +44,9 @@ class HidEventHandler(Resource):
         # handle the event in accord with it's source
         sender: tp.Optional[str] = Spoke().identify_sender(event_dict["name"])
         string: str = event_dict["string"]
-        Spoke().hid_buffer = string
+
+        if sender is not None:
+            Spoke().hid_buffer = string
 
         try:
             if sender == "rfid_reader":
