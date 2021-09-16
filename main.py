@@ -2,6 +2,7 @@ import atexit
 import typing as tp
 
 from flask import Flask, request
+from flask_cors import CORS
 from flask_restful import Api, Resource
 from loguru import logger
 
@@ -18,6 +19,7 @@ logger.configure(handlers=[CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG])
 # REST API endpoints
 app = Flask(__name__)  # create a Flask app
 api = Api(app)  # create a Flask API
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 @atexit.register

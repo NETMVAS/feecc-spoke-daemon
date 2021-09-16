@@ -18,6 +18,7 @@ spidev = "^3.5"
 types-requests = "^2.25.0"
 types-PyYAML = "^5.4.3"
 loguru = "^0.5.3"
+Flask-Cors = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
