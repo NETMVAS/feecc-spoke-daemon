@@ -182,8 +182,13 @@ class Spoke(metaclass=SingletonMeta):
 
             # start an operation on existing unit if it's a valid barcode
             elif utils.is_a_ean13_barcode(barcode_string):
-                logger.info(f"Starting an operation for unit with int. id {barcode_string}")
-                self.state.start_operation_on_existing_unit(barcode_string, additional_info)
+
+                if self.config["general"]["continue_operation"]:
+                    logger.info(f"Starting an operation for unit with int. id {barcode_string}")
+                    self.state.start_operation_on_existing_unit(barcode_string, additional_info)
+                else:
+                    logger.info(f"Operation continue disabled in config. Ignoring barcode.")
+
             else:
                 logger.warning(
                     f"'{barcode_string}' is not a EAN13 barcode and cannot be an internal unit ID. Cannot start operation."

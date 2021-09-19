@@ -3,6 +3,7 @@ general: # miscellaneous parameters
   production_stage_name: "Assembly"
   send_upload_request: true
   create_new_unit: false
+  continue_operation: true
 
 new_unit_creation_settings:
   unit_type: "Криптоанализатор"
