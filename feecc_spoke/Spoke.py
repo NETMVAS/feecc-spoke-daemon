@@ -26,6 +26,7 @@ class Spoke(metaclass=SingletonMeta):
         self.state: State = AwaitLogin(self)
         self._state_thread_list: tp.List[threading.Thread] = []
         self.hid_buffer: str = ""
+        self.hid_buffer_added_on: int = 0
 
         # shortcuts to various config parameters
         self.create_new_unit: bool = bool(self.config["general"]["create_new_unit"])
@@ -187,7 +188,7 @@ class Spoke(metaclass=SingletonMeta):
                     logger.info(f"Starting an operation for unit with int. id {barcode_string}")
                     self.state.start_operation_on_existing_unit(barcode_string, additional_info)
                 else:
-                    logger.info(f"Operation continue disabled in config. Ignoring barcode.")
+                    logger.info("Operation continue disabled in config. Ignoring barcode.")
 
             else:
                 logger.warning(

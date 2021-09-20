@@ -1,5 +1,6 @@
 import atexit
 import typing as tp
+from time import time
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -47,6 +48,7 @@ class HidEventHandler(Resource):
 
         if sender is not None:
             Spoke().hid_buffer = string
+            Spoke().hid_buffer_added_on = int(time())
 
         try:
             if sender == "rfid_reader":
@@ -74,6 +76,7 @@ class LatestBufferEntry(Resource):
             "status": True,
             "comment": "Retrieved HID buffer",
             "buffer": Spoke().hid_buffer,
+            "added_on": Spoke().hid_buffer_added_on,
         }
 
 
