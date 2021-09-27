@@ -1,0 +1,6 @@
+# Poetry dynamic deps file
+poetry.lock
+
+# Virtualenv and python cache files
+.venv
+.*_cache
