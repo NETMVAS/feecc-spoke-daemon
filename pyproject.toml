@@ -7,8 +7,6 @@ license = "GNU GPL v3"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-Flask = "^2.0.1"
-Flask-RESTful = "^0.3.9"
 requests = "^2.25.1"
 PyYAML = "^5.4.1"
 Pillow-PIL = "^0.1dev"
@@ -19,6 +17,8 @@ types-requests = "^2.25.0"
 types-PyYAML = "^5.4.3"
 loguru = "^0.5.3"
 Flask-Cors = "^3.0.10"
+fastapi = "^0.68.1"
+uvicorn = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
